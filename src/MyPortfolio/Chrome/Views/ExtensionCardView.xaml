@@ -31,24 +31,24 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <Border Grid.Column="0" Width="52" Height="52" CornerRadius="8"
-                        Background="{StaticResource Surface0Brush}"
-                        BorderBrush="{StaticResource Surface1Brush}"
+                        Background="{DynamicResource Surface0Brush}"
+                        BorderBrush="{DynamicResource Surface1Brush}"
                         BorderThickness="1" Margin="0,0,12,0">
                     <Grid>
                         <Image Source="{Binding Icon}" Stretch="Uniform" Margin="7"
                                Visibility="{Binding Icon, Converter={StaticResource NullToVis}}" />
                         <TextBlock Text="EXT" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource MauveBrush}"
+                                   FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource MauveBrush}"
                                    Visibility="{Binding Icon, Converter={StaticResource NullToVis}, ConverterParameter=invert}" />
                     </Grid>
                 </Border>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="SemiBold"
-                               Foreground="{StaticResource TextBrush}" TextTrimming="CharacterEllipsis" />
+                               Foreground="{DynamicResource TextBrush}" TextTrimming="CharacterEllipsis" />
                     <TextBlock Text="{Binding Repo}" Style="{StaticResource MuteText}" TextTrimming="CharacterEllipsis" />
                 </StackPanel>
                 <TextBlock Grid.Column="2" Text="{Binding Stars}" Style="{StaticResource BadgeText}"
-                           Foreground="{StaticResource YellowBrush}" VerticalAlignment="Top" />
+                           Foreground="{DynamicResource YellowBrush}" VerticalAlignment="Top" />
             </Grid>
 
             <Grid Grid.Row="1" Margin="0,0,0,10">
@@ -59,21 +59,21 @@
                 <Border Grid.Column="0" CornerRadius="8" Padding="9,4" Margin="0,0,8,0">
                     <Border.Style>
                         <Style TargetType="Border">
-                            <Setter Property="Background" Value="{StaticResource SapphireSoftBrush}" />
-                            <Setter Property="BorderBrush" Value="{StaticResource SapphireBrush}" />
+                            <Setter Property="Background" Value="{DynamicResource SapphireSoftBrush}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource SapphireBrush}" />
                             <Setter Property="BorderThickness" Value="1" />
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsInstalled}" Value="True">
-                                    <Setter Property="Background" Value="{StaticResource GreenSoftBrush}" />
-                                    <Setter Property="BorderBrush" Value="{StaticResource GreenBrush}" />
+                                    <Setter Property="Background" Value="{DynamicResource GreenSoftBrush}" />
+                                    <Setter Property="BorderBrush" Value="{DynamicResource GreenBrush}" />
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding IsUpdateAvailable}" Value="True">
-                                    <Setter Property="Background" Value="{StaticResource YellowSoftBrush}" />
-                                    <Setter Property="BorderBrush" Value="{StaticResource YellowBrush}" />
+                                    <Setter Property="Background" Value="{DynamicResource YellowSoftBrush}" />
+                                    <Setter Property="BorderBrush" Value="{DynamicResource YellowBrush}" />
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding HasAsset}" Value="False">
-                                    <Setter Property="Background" Value="{StaticResource RedSoftBrush}" />
-                                    <Setter Property="BorderBrush" Value="{StaticResource RedBrush}" />
+                                    <Setter Property="Background" Value="{DynamicResource RedSoftBrush}" />
+                                    <Setter Property="BorderBrush" Value="{DynamicResource RedBrush}" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -106,7 +106,7 @@
             </Grid>
 
             <TextBlock Grid.Row="4" Text="{Binding BusyMessage}"
-                       Foreground="{StaticResource SapphireBrush}" FontSize="11" FontWeight="SemiBold"
+                       Foreground="{DynamicResource SapphireBrush}" FontSize="11" FontWeight="SemiBold"
                        Margin="0,0,0,8" Visibility="{Binding Busy, Converter={StaticResource BoolToVis}}" />
 
             <Grid Grid.Row="5">

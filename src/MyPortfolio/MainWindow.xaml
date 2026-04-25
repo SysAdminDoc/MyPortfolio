@@ -18,7 +18,7 @@
         <conv:EmptyStringToVisibilityConverter x:Key="EmptyStringToVis" />
     </Window.Resources>
 
-    <Grid Background="{StaticResource BaseBrush}">
+    <Grid Background="{DynamicResource BaseBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -30,8 +30,8 @@
 
         <!-- Header -->
         <Border Grid.Row="0"
-                Background="{StaticResource CrustBrush}"
-                BorderBrush="{StaticResource Surface0Brush}"
+                Background="{DynamicResource CrustBrush}"
+                BorderBrush="{DynamicResource Surface0Brush}"
                 BorderThickness="0,0,0,1"
                 Padding="22,16">
             <Grid>
@@ -43,8 +43,8 @@
                 </Grid.ColumnDefinitions>
 
                 <Border Grid.Column="0" Width="44" Height="44" CornerRadius="8"
-                        Background="{StaticResource CrustBrush}"
-                        BorderBrush="{StaticResource Surface1Brush}"
+                        Background="{DynamicResource CrustBrush}"
+                        BorderBrush="{DynamicResource Surface1Brush}"
                         BorderThickness="1" Margin="0,0,14,0">
                     <Image Source="Assets/logo.png"
                            Width="34"
@@ -157,15 +157,15 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Background="{StaticResource SapphireSoftBrush}"
-                                            BorderBrush="{StaticResource SapphireBrush}"
+                                    <Border Background="{DynamicResource SapphireSoftBrush}"
+                                            BorderBrush="{DynamicResource SapphireBrush}"
                                             BorderThickness="1"
                                             CornerRadius="7"
                                             Padding="8,4"
                                             Margin="0,0,6,6">
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="{Binding}" Style="{StaticResource BadgeText}"
-                                                       Foreground="{StaticResource SapphireBrush}" />
+                                                       Foreground="{DynamicResource SapphireBrush}" />
                                             <Button Content="x"
                                                     Command="{Binding DataContext.RemoveExtraOwnerCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                     CommandParameter="{Binding}"
@@ -193,6 +193,27 @@
                                   Margin="0,14,0,0" />
                         <TextBlock Style="{StaticResource MuteText}" TextWrapping="Wrap" Margin="26,6,0,0"
                                    Text="Runs the same discovery pass as Refresh all and updates each tab's last-refresh timestamp." />
+
+                        <TextBlock Text="Appearance" Style="{StaticResource SectionTitle}" Margin="0,16,0,8" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Theme" Style="{StaticResource InputLabel}" />
+                                <ComboBox ItemsSource="{Binding ThemeOptions}"
+                                          SelectedItem="{Binding ThemeFlavor}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Accent" Style="{StaticResource InputLabel}" />
+                                <ComboBox ItemsSource="{Binding AccentOptions}"
+                                          SelectedItem="{Binding AccentColor}" />
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="{Binding ThemeSummary}" Style="{StaticResource MuteText}"
+                                   TextWrapping="Wrap" Margin="0,7,0,0" />
                     </StackPanel>
 
                     <!-- Per-tab knobs (left + middle column) -->
@@ -283,8 +304,8 @@
 
         <!-- Activity log header -->
         <Border Grid.Row="3"
-                Background="{StaticResource MantleBrush}"
-                BorderBrush="{StaticResource Surface0Brush}"
+                Background="{DynamicResource MantleBrush}"
+                BorderBrush="{DynamicResource Surface0Brush}"
                 BorderThickness="0,1,0,0">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -302,13 +323,13 @@
         </Border>
 
         <!-- Log panel -->
-        <Border Grid.Row="4" Background="{StaticResource CrustBrush}" Padding="16,10">
+        <Border Grid.Row="4" Background="{DynamicResource CrustBrush}" Padding="16,10">
             <ListBox ItemsSource="{Binding Log.Lines}"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                      ScrollViewer.VerticalScrollBarVisibility="Auto"
                      FontFamily="Cascadia Mono, Consolas"
                      FontSize="11"
-                     Foreground="{StaticResource SubtextBrush}"
+                     Foreground="{DynamicResource SubtextBrush}"
                      x:Name="LogList">
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem">
@@ -329,8 +350,8 @@
         </Border>
 
         <!-- Status bar -->
-        <Border Grid.Row="5" Background="{StaticResource CrustBrush}" Padding="16,7"
-                BorderBrush="{StaticResource Surface0Brush}" BorderThickness="0,1,0,0">
+        <Border Grid.Row="5" Background="{DynamicResource CrustBrush}" Padding="16,7"
+                BorderBrush="{DynamicResource Surface0Brush}" BorderThickness="0,1,0,0">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />

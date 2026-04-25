@@ -18,11 +18,12 @@ MyPortfolio uses this file as the public implementation checklist. Local scratch
   - Keep existing comma/semicolon/newline parsing as an import path for compatibility.
   - Added add/remove/clear chip actions, Enter-to-add handling, duplicate filtering, primary-owner filtering, and pasted-list import.
 
-## Next
-
-- [ ] v0.5.0 — Theme expansion
+- [x] v0.5.0 — Theme expansion
   - Add Catppuccin Latte light theme.
   - Add a small accent picker that reuses the existing token system.
+  - Added runtime Mocha / Latte token switching plus Mauve, Sapphire, Teal, Green, Peach, and Red accent choices.
+
+## Next
 
 - [ ] v0.6.0 — APK metadata enrichment
   - Read `AndroidManifest.xml` from APK ZIPs where feasible.

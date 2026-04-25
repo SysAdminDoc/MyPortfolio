@@ -20,8 +20,8 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Background="{StaticResource MantleBrush}"
-                Padding="20,12" BorderBrush="{StaticResource Surface0Brush}"
+        <Border Grid.Row="0" Background="{DynamicResource MantleBrush}"
+                Padding="20,12" BorderBrush="{DynamicResource Surface0Brush}"
                 BorderThickness="0,0,0,1">
             <Grid>
                 <Grid.RowDefinitions>
@@ -51,7 +51,7 @@
                     <TextBlock Grid.Column="0" Style="{StaticResource MuteText}" VerticalAlignment="Center" Margin="0,0,16,0">
                         <Run Text="{Binding AvailableCount, Mode=OneWay}" />
                         <Run Text="apps •" />
-                        <Run Text="{Binding DownloadedCount, Mode=OneWay}" Foreground="{StaticResource GreenBrush}" />
+                        <Run Text="{Binding DownloadedCount, Mode=OneWay}" Foreground="{DynamicResource GreenBrush}" />
                         <Run Text="downloaded •" />
                         <Run Text="{Binding LastRefreshText, Mode=OneWay}" />
                     </TextBlock>
@@ -72,12 +72,12 @@
             </Grid>
         </Border>
 
-        <Border Grid.Row="1" Background="{StaticResource CrustBrush}"
-                BorderBrush="{StaticResource Surface0Brush}" BorderThickness="0,0,0,1"
+        <Border Grid.Row="1" Background="{DynamicResource CrustBrush}"
+                BorderBrush="{DynamicResource Surface0Brush}" BorderThickness="0,0,0,1"
                 Padding="20,8">
             <TextBlock Style="{StaticResource MuteText}" TextWrapping="Wrap">
                 <Run Text="Android tab is download-only — APKs land in" />
-                <Run Text="{Binding DownloadFolder, Mode=OneWay}" Foreground="{StaticResource TealBrush}" FontWeight="SemiBold" />
+                <Run Text="{Binding DownloadFolder, Mode=OneWay}" Foreground="{DynamicResource TealBrush}" FontWeight="SemiBold" />
                 <Run Text=". Sideload onto a device with adb install or your own Files transfer." />
             </TextBlock>
         </Border>

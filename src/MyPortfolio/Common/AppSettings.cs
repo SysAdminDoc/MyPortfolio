@@ -13,6 +13,8 @@ public sealed class AppSettings
     public List<string> ExtraOwners { get; set; } = new();
     public List<string> HiddenRepos { get; set; } = new();
     public bool RefreshOnLaunch { get; set; } = false;
+    public string ThemeFlavor { get; set; } = "Mocha";
+    public string AccentColor { get; set; } = "Mauve";
 
     // Desktop tab
     public bool DesktopUseTopicFilter { get; set; } = false;

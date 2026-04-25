@@ -4,6 +4,7 @@ using MyPortfolio.Android.ViewModels;
 using MyPortfolio.Chrome.ViewModels;
 using MyPortfolio.Common;
 using MyPortfolio.Desktop.ViewModels;
+using MyPortfolio.Themes;
 
 namespace MyPortfolio;
 
@@ -41,6 +42,8 @@ public sealed class MainViewModel : ViewModelBase
     public ICommand ClearExtraOwnersCommand { get; }
 
     public ObservableCollection<string> ExtraOwners { get; } = new();
+    public IReadOnlyList<string> ThemeOptions => ThemeService.ThemeFlavors;
+    public IReadOnlyList<string> AccentOptions => ThemeService.AccentNames;
 
     public MainViewModel()
     {
@@ -49,6 +52,7 @@ public sealed class MainViewModel : ViewModelBase
         _factory = new GitHubClientFactory();
         _log = new LogSink();
         _settings = _settingsService.Load();
+        ThemeService.Apply(_settings);
 
         _githubUserInput = _settings.GitHubUser;
         _githubTokenInput = _settings.GitHubToken ?? string.Empty;
@@ -123,6 +127,34 @@ public sealed class MainViewModel : ViewModelBase
         get => _settings.RefreshOnLaunch;
         set { if (_settings.RefreshOnLaunch != value) { _settings.RefreshOnLaunch = value; OnPropertyChanged(); } }
     }
+
+    public string ThemeFlavor
+    {
+        get => ThemeService.NormalizeTheme(_settings.ThemeFlavor);
+        set
+        {
+            var normalized = ThemeService.NormalizeTheme(value);
+            if (_settings.ThemeFlavor == normalized) return;
+            _settings.ThemeFlavor = normalized;
+            ApplyThemeSelection();
+            OnPropertyChanged();
+        }
+    }
+
+    public string AccentColor
+    {
+        get => ThemeService.NormalizeAccent(_settings.AccentColor);
+        set
+        {
+            var normalized = ThemeService.NormalizeAccent(value);
+            if (_settings.AccentColor == normalized) return;
+            _settings.AccentColor = normalized;
+            ApplyThemeSelection();
+            OnPropertyChanged();
+        }
+    }
+
+    public string ThemeSummary => $"{ThemeFlavor} theme with {AccentColor.ToLowerInvariant()} accent.";
 
     // Per-tab knobs surface as bound properties on the shared settings drawer.
     public bool DesktopUseTopicFilter
@@ -211,6 +243,7 @@ public sealed class MainViewModel : ViewModelBase
 
         _settings.GitHubUser = user;
         _settings.GitHubToken = string.IsNullOrWhiteSpace(GitHubTokenInput) ? null : GitHubTokenInput.Trim();
+        ThemeService.Apply(_settings);
         AddExtraOwnersFromEntry(showStatus: false);
         RemovePrimaryOwnerFromExtras(user);
         _settings.ExtraOwners = ExtraOwners.ToList();
@@ -222,6 +255,9 @@ public sealed class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(DesktopTopicFilter));
         OnPropertyChanged(nameof(ChromeTopicFilter));
         OnPropertyChanged(nameof(AndroidTopicFilter));
+        OnPropertyChanged(nameof(ThemeFlavor));
+        OnPropertyChanged(nameof(AccentColor));
+        OnPropertyChanged(nameof(ThemeSummary));
         return true;
     }
 
@@ -341,5 +377,11 @@ public sealed class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(ExtraOwnerSummary));
         OnPropertyChanged(nameof(CanAddExtraOwner));
         CommandManager.InvalidateRequerySuggested();
+    }
+
+    private void ApplyThemeSelection()
+    {
+        ThemeService.Apply(_settings);
+        OnPropertyChanged(nameof(ThemeSummary));
     }
 }

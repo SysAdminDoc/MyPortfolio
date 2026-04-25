@@ -32,7 +32,7 @@ MyPortfolio replaces three separate stores — [LocalDesktopStore][lds], [LocalC
 | **Chrome extensions** | `.zip` or `.crx` | Download, extract (zip-slip guarded, CRX2/CRX3 header strip), then launch Chrome / Brave / Edge / Vivaldi / Opera with `--load-extension="path1,path2,..."`. |
 | **Android APKs** | `.apk` | Download to `%USERPROFILE%\Downloads\MyPortfolio\Android\<owner>\<repo>\<version>\` with hash verification. Reveal in Explorer when you're ready to sideload. |
 
-One settings drawer drives all three tabs — same GitHub user, same PAT, optional extra collaborator owners, separate topic filter / verification toggles per tab.
+One settings drawer drives all three tabs — same GitHub user, same PAT, optional extra collaborator owners, shared Mocha / Latte appearance, accent color, separate topic filter / verification toggles per tab.
 
 ---
 
@@ -40,7 +40,7 @@ One settings drawer drives all three tabs — same GitHub user, same PAT, option
 
 Three separate stores, three separate setups, three separate logs. Same GitHub user every time. The only thing that varied per store was *which release asset to pick and what to do with it*. So:
 
-- **Shared shell** — one window, one Catppuccin Mocha theme, one activity log feeding from every tab, one settings drawer.
+- **Shared shell** — one window, Catppuccin Mocha / Latte themes, one activity log feeding from every tab, one settings drawer.
 - **Tabbed surface** — switch between Desktop / Chrome / Android with a click; per-tab refresh button + per-tab "Refresh all" trigger from the header.
 - **One on-disk identity** — `%APPDATA%\MyPortfolio\settings.json`. Per-tab manifests for installed/downloaded state.
 
@@ -74,9 +74,10 @@ dotnet build src/MyPortfolio/MyPortfolio.csproj -c Release
 3. *(Optional)* Paste a personal access token to raise the rate limit and surface private repos.
 4. *(Optional)* Add **extra owners** — use the chip editor for collaborator users / orgs, or paste a comma / semicolon / newline-separated list.
 5. Toggle topic filters per tab if you want to scope discovery (`windows-app`, `chrome-extension`, `android-app` are the suggested defaults).
-6. Enable **Refresh all tabs when MyPortfolio starts** if you want discovery to run automatically on launch.
-7. Click **Save and refresh all** — every tab populates simultaneously.
-8. Switch between tabs and click **Install** / **Download APK** / **Launch with extensions** as you like.
+6. Pick a Catppuccin **Theme** and **Accent** if you want a lighter surface or a different focus color.
+7. Enable **Refresh all tabs when MyPortfolio starts** if you want discovery to run automatically on launch.
+8. Click **Save and refresh all** — every tab populates simultaneously.
+9. Switch between tabs and click **Install** / **Download APK** / **Launch with extensions** as you like.
 
 Each tab shows its last successful refresh time beside its catalog summary, so stale discovery state is visible before you install or download anything.
 
@@ -123,7 +124,7 @@ src/MyPortfolio/
 ├── Common/               # ViewModelBase, RelayCommand, AppSettings, SettingsService,
 │                         # GitHubClientFactory, HttpDownloader, HashVerifier, LogSink, Format
 ├── Converters/           # BoolToVis, NullToVis, EmptyStringToVis
-├── Themes/DarkTheme.xaml # Catppuccin Mocha tokens + Button/TextBox/CheckBox/TabItem styles
+├── Themes/               # Catppuccin token dictionary + runtime Mocha / Latte theme service
 │
 ├── Desktop/              # Models / Services / ViewModels / Views — desktop-app install
 ├── Chrome/               # Models / Services / ViewModels / Views — extension install + launcher
