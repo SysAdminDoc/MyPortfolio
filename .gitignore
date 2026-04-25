@@ -1,0 +1,41 @@
+# Build output
+bin/
+obj/
+publish/
+out/
+*.user
+*.suo
+*.pdb
+*.dll.config
+.vs/
+.vscode/
+.idea/
+
+# Local config
+*.local
+*.bak
+*.log
+local.properties
+
+# Tooling
+CLAUDE.md
+CODEX_CHANGELOG.md
+.claude/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Build artifacts
+*.zip
+*.sha256.txt
+*.sha256
+*.msi
+*.exe
+*.crx
+*.apk
+publish-*/
+
+# NuGet
+*.nupkg
+packages/

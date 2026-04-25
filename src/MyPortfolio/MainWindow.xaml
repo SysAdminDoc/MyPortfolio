@@ -1,0 +1,274 @@
+<Window x:Class="MyPortfolio.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:MyPortfolio"
+        xmlns:desktopViews="clr-namespace:MyPortfolio.Desktop.Views"
+        xmlns:chromeViews="clr-namespace:MyPortfolio.Chrome.Views"
+        xmlns:androidViews="clr-namespace:MyPortfolio.Android.Views"
+        xmlns:conv="clr-namespace:MyPortfolio.Converters"
+        Title="MyPortfolio" Height="900" Width="1360"
+        MinWidth="980" MinHeight="680"
+        WindowStartupLocation="CenterScreen">
+    <Window.DataContext>
+        <local:MainViewModel />
+    </Window.DataContext>
+    <Window.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
+        <conv:EmptyStringToVisibilityConverter x:Key="EmptyStringToVis" />
+    </Window.Resources>
+
+    <Grid Background="{StaticResource BaseBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="180" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0"
+                Background="{StaticResource CrustBrush}"
+                BorderBrush="{StaticResource Surface0Brush}"
+                BorderThickness="0,0,0,1"
+                Padding="22,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Width="44" Height="44" CornerRadius="8"
+                        Background="{StaticResource MauveSoftBrush}"
+                        BorderBrush="{StaticResource MauveBrush}"
+                        BorderThickness="1" Margin="0,0,14,0">
+                    <TextBlock Text="MP" HorizontalAlignment="Center" VerticalAlignment="Center"
+                               FontWeight="SemiBold" Foreground="{StaticResource MauveBrush}" />
+                </Border>
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="MyPortfolio" Style="{StaticResource HeadingText}" />
+                    <TextBlock Style="{StaticResource SubtleText}"
+                               Text="One desktop catalog for every app you ship — Windows, Chromium, Android — all from your GitHub releases." />
+                </StackPanel>
+
+                <Button Grid.Column="2" Content="Refresh all" Command="{Binding RefreshAllCommand}"
+                        Style="{StaticResource AccentButton}" Margin="0,0,8,0" />
+
+                <Button Grid.Column="3" Content="Settings"
+                        x:Name="SettingsToggleButton"
+                        Click="ToggleSettings_Click" />
+            </Grid>
+        </Border>
+
+        <!-- Settings drawer -->
+        <Border x:Name="SettingsDrawer"
+                Grid.Row="1"
+                Style="{StaticResource PanelBorder}"
+                Margin="20,14,20,0"
+                Padding="18"
+                Visibility="Collapsed"
+                Effect="{StaticResource PanelShadow}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0" Margin="0,0,0,14">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Discovery settings" Style="{StaticResource SectionTitle}" />
+                        <TextBlock Style="{StaticResource SubtleText}"
+                                   Text="One GitHub source for all three tabs. Topic filters and verification toggles are per-tab." />
+                    </StackPanel>
+                    <Button Grid.Column="1" Content="Close" Click="ToggleSettings_Click"
+                            Style="{StaticResource LinkButton}" VerticalAlignment="Top" />
+                </Grid>
+
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.1*" />
+                        <ColumnDefinition Width="1*" />
+                        <ColumnDefinition Width="1*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Shared GitHub source -->
+                    <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                        <TextBlock Text="GitHub user or organization" Style="{StaticResource InputLabel}" />
+                        <Grid>
+                            <TextBox x:Name="GitHubUserBox"
+                                     Text="{Binding GitHubUserInput, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Text="example: SysAdminDoc" Style="{StaticResource MuteText}"
+                                       Margin="12,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                                       Visibility="{Binding Text, ElementName=GitHubUserBox, Converter={StaticResource EmptyStringToVis}}" />
+                        </Grid>
+
+                        <TextBlock Text="GitHub personal access token"
+                                   Style="{StaticResource InputLabel}" Margin="0,12,0,5" />
+                        <PasswordBox x:Name="GitHubTokenBox"
+                                     PasswordChanged="GitHubTokenBox_PasswordChanged" />
+                        <TextBlock Style="{StaticResource MuteText}" TextWrapping="Wrap" Margin="0,7,0,0"
+                                   Text="Optional. Stored only in your local settings file. Boosts the rate limit from 60/h to 5,000/h and surfaces private repos." />
+
+                        <TextBlock Text="Extra owners (comma-separated)"
+                                   Style="{StaticResource InputLabel}" Margin="0,12,0,5" />
+                        <TextBox Text="{Binding ExtraOwnersInput, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBlock Style="{StaticResource MuteText}" TextWrapping="Wrap" Margin="0,7,0,0"
+                                   Text="Pull additional users / orgs into discovery. Useful for collaborator accounts." />
+                    </StackPanel>
+
+                    <!-- Per-tab knobs (left + middle column) -->
+                    <StackPanel Grid.Column="1" Margin="0,0,16,0">
+                        <TextBlock Text="Desktop tab" Style="{StaticResource SectionTitle}" Margin="0,0,0,8" />
+                        <CheckBox Content="Filter by GitHub topic"
+                                  IsChecked="{Binding DesktopUseTopicFilter}" />
+                        <Grid Margin="0,8,0,0">
+                            <TextBox x:Name="DesktopTopicBox"
+                                     Text="{Binding DesktopTopicFilter, UpdateSourceTrigger=PropertyChanged}"
+                                     IsEnabled="{Binding DesktopUseTopicFilter}" />
+                            <TextBlock Text="windows-app" Style="{StaticResource MuteText}"
+                                       Margin="12,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                                       Visibility="{Binding Text, ElementName=DesktopTopicBox, Converter={StaticResource EmptyStringToVis}}" />
+                        </Grid>
+                        <CheckBox Content="Verify SHA-256 sidecar"
+                                  IsChecked="{Binding DesktopVerifyHashSidecar}"
+                                  Margin="0,12,0,0" />
+
+                        <TextBlock Text="Install folder override"
+                                   Style="{StaticResource InputLabel}" Margin="0,12,0,5" />
+                        <TextBox Text="{Binding DesktopInstallRootOverride, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <TextBlock Text="Chrome tab" Style="{StaticResource SectionTitle}" Margin="0,18,0,8" />
+                        <CheckBox Content="Filter by GitHub topic"
+                                  IsChecked="{Binding ChromeUseTopicFilter}" />
+                        <Grid Margin="0,8,0,0">
+                            <TextBox x:Name="ChromeTopicBox"
+                                     Text="{Binding ChromeTopicFilter, UpdateSourceTrigger=PropertyChanged}"
+                                     IsEnabled="{Binding ChromeUseTopicFilter}" />
+                            <TextBlock Text="chrome-extension" Style="{StaticResource MuteText}"
+                                       Margin="12,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                                       Visibility="{Binding Text, ElementName=ChromeTopicBox, Converter={StaticResource EmptyStringToVis}}" />
+                        </Grid>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2" VerticalAlignment="Top">
+                        <TextBlock Text="Android tab" Style="{StaticResource SectionTitle}" Margin="0,0,0,8" />
+                        <CheckBox Content="Filter by GitHub topic"
+                                  IsChecked="{Binding AndroidUseTopicFilter}" />
+                        <Grid Margin="0,8,0,0">
+                            <TextBox x:Name="AndroidTopicBox"
+                                     Text="{Binding AndroidTopicFilter, UpdateSourceTrigger=PropertyChanged}"
+                                     IsEnabled="{Binding AndroidUseTopicFilter}" />
+                            <TextBlock Text="android-app" Style="{StaticResource MuteText}"
+                                       Margin="12,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                                       Visibility="{Binding Text, ElementName=AndroidTopicBox, Converter={StaticResource EmptyStringToVis}}" />
+                        </Grid>
+                        <CheckBox Content="Verify SHA-256 sidecar"
+                                  IsChecked="{Binding AndroidVerifyHashSidecar}"
+                                  Margin="0,12,0,0" />
+
+                        <TextBlock Text="Download folder override"
+                                   Style="{StaticResource InputLabel}" Margin="0,12,0,5" />
+                        <TextBox Text="{Binding AndroidDownloadFolderOverride, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBlock Style="{StaticResource MuteText}" TextWrapping="Wrap" Margin="0,7,0,0"
+                                   Text="Default: %USERPROFILE%\Downloads\MyPortfolio\Android" />
+
+                        <TextBlock Text="Hidden repositories" Style="{StaticResource InputLabel}" Margin="0,18,0,5" />
+                        <TextBlock Text="{Binding HiddenRepoSummary}" Style="{StaticResource SubtleText}" TextWrapping="Wrap" />
+                        <Button Content="Restore all hidden repos"
+                                Command="{Binding ClearHiddenReposCommand}"
+                                IsEnabled="{Binding HasHiddenRepos}" Margin="0,8,0,0" HorizontalAlignment="Left" />
+                    </StackPanel>
+                </Grid>
+
+                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                    <Button Content="Save settings" Command="{Binding SaveSettingsCommand}" Margin="0,0,8,0" />
+                    <Button Content="Save and refresh all"
+                            Command="{Binding SaveAndRefreshAllCommand}"
+                            Style="{StaticResource AccentButton}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Tabs -->
+        <TabControl Grid.Row="2" Margin="14,12,14,0" Padding="0">
+            <TabItem Header="Desktop apps">
+                <desktopViews:DesktopTabView DataContext="{Binding DesktopTab}" />
+            </TabItem>
+            <TabItem Header="Chrome extensions">
+                <chromeViews:ChromeTabView DataContext="{Binding ChromeTab}" />
+            </TabItem>
+            <TabItem Header="Android APKs">
+                <androidViews:AndroidTabView DataContext="{Binding AndroidTab}" />
+            </TabItem>
+        </TabControl>
+
+        <!-- Activity log header -->
+        <Border Grid.Row="3"
+                Background="{StaticResource MantleBrush}"
+                BorderBrush="{StaticResource Surface0Brush}"
+                BorderThickness="0,1,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="20,8,0,8" VerticalAlignment="Center">
+                    <TextBlock Text="Activity log" Style="{StaticResource SectionTitle}" />
+                    <TextBlock Style="{StaticResource MuteText}" Margin="10,1,0,0"
+                               Text="Discovery, download, install, run, and error events from every tab" />
+                </StackPanel>
+                <Button Grid.Column="1" Content="Clear" Command="{Binding ClearLogCommand}"
+                        Style="{StaticResource LinkButton}" Margin="0,0,16,0" />
+            </Grid>
+        </Border>
+
+        <!-- Log panel -->
+        <Border Grid.Row="4" Background="{StaticResource CrustBrush}" Padding="16,10">
+            <ListBox ItemsSource="{Binding Log.Lines}"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     FontFamily="Cascadia Mono, Consolas"
+                     FontSize="11"
+                     Foreground="{StaticResource SubtextBrush}"
+                     x:Name="LogList">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="Padding" Value="0,1" />
+                        <Setter Property="Margin" Value="0" />
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <ContentPresenter />
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+            </ListBox>
+        </Border>
+
+        <!-- Status bar -->
+        <Border Grid.Row="5" Background="{StaticResource CrustBrush}" Padding="16,7"
+                BorderBrush="{StaticResource Surface0Brush}" BorderThickness="0,1,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="{Binding StatusText}" Style="{StaticResource SubtleText}" />
+                <TextBlock Grid.Column="1" Style="{StaticResource MuteText}" Text="MyPortfolio v0.1.0" />
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
