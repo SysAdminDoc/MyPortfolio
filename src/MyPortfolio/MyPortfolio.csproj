@@ -15,6 +15,7 @@
     <Product>MyPortfolio</Product>
     <Company>SysAdminDoc</Company>
     <Copyright>Copyright (c) 2026 SysAdminDoc. MIT License.</Copyright>
+    <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <NoWarn>CA1416</NoWarn>
   </PropertyGroup>
@@ -22,6 +23,13 @@
   <ItemGroup>
     <PackageReference Include="Octokit" Version="13.0.1" />
     <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Assets\icon.ico" />
+    <None Remove="Assets\logo.png" />
+    <Resource Include="Assets\icon.ico" />
+    <Resource Include="Assets\logo.png" />
   </ItemGroup>
 
 </Project>

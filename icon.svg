@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">MyPortfolio app icon</title>
+  <desc id="desc">Three overlapping tab panels in Catppuccin teal, sapphire, and mauve.</desc>
+  <g fill="none" fill-rule="evenodd">
+    <rect x="218" y="184" width="294" height="658" rx="82"
+          transform="rotate(-8 365 513)"
+          fill="#94e2d5" stroke="#45475a" stroke-width="16"/>
+    <rect x="513" y="184" width="294" height="658" rx="82"
+          transform="rotate(8 660 513)"
+          fill="#cba6f7" stroke="#45475a" stroke-width="16"/>
+    <rect x="365" y="132" width="294" height="760" rx="86"
+          fill="#74c7ec" stroke="#45475a" stroke-width="16"/>
+    <path d="M425 208c0-17.673 14.327-32 32-32h50"
+          stroke="#f5f7ff" stroke-width="18" stroke-linecap="round" opacity=".52"/>
+    <path d="M572 184h24c17.673 0 32 14.327 32 32v36"
+          stroke="#f5f7ff" stroke-width="14" stroke-linecap="round" opacity=".36"/>
+    <path d="M286 286c0-17.673 14.327-32 32-32h24"
+          stroke="#f5f7ff" stroke-width="14" stroke-linecap="round" opacity=".34"/>
+    <path d="M686 282c0-17.673 14.327-32 32-32h18"
+          stroke="#f5f7ff" stroke-width="14" stroke-linecap="round" opacity=".34"/>
+    <path d="M413 818h198"
+          stroke="#11111b" stroke-width="16" stroke-linecap="round" opacity=".18"/>
+  </g>
+</svg>

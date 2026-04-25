@@ -71,13 +71,20 @@
 
 Per global Branding rule, integrate in one pass:
 
-- [ ] Repo-root `icon.png` + `icon.svg`
-- [ ] Size variants 16 / 32 / 48 / 64 / 128 / 256 / 512 / 1024 (PNG, RGBA)
-- [ ] Repo-root `icon.ico` (Windows multi-res — wire into `<ApplicationIcon>` in csproj)
-- [ ] Repo-root `banner.png` (the Wordmark variant, 2048×512)
-- [ ] Repo-root `logo.png` (the App-icon variant, 512×512)
-- [ ] README centered header — `banner.png` + title-line w/ `logo.png`
-- [ ] Replace the in-app `MP` text placeholder in `MainWindow.xaml` with the actual icon
+- [x] Repo-root `icon.png` + `icon.svg`
+- [x] Size variants 16 / 32 / 48 / 64 / 128 / 256 / 512 / 1024 (PNG, RGBA)
+- [x] Repo-root `icon.ico` (Windows multi-res — wire into `<ApplicationIcon>` in csproj)
+- [x] Repo-root `banner.png` (the Wordmark variant, 2048×512)
+- [x] Repo-root `logo.png` (the App-icon variant, 512×512)
+- [x] README centered header — `banner.png` + title-line w/ `logo.png`
+- [x] Replace the in-app `MP` text placeholder in `MainWindow.xaml` with the actual icon
+
+Implemented from deterministic SVG sources:
+
+- `icon.svg`
+- `branding/banner.svg`
+- `branding/icons/icon-16.png` through `branding/icons/icon-1024.png`
+- `src/MyPortfolio/Assets/icon.ico` and `src/MyPortfolio/Assets/logo.png` for the WPF shell
 
 **Verify every PNG has an alpha channel:**
 

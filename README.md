@@ -1,4 +1,11 @@
-<h1 align="center">MyPortfolio</h1>
+<p align="center">
+  <img src="banner.png" alt="MyPortfolio" width="720" />
+</p>
+
+<h1 align="center">
+  <img src="logo.png" alt="" width="40" height="40" />
+  MyPortfolio
+</h1>
 
 <p align="center">
   <a href="https://github.com/SysAdminDoc/MyPortfolio/releases"><img src="https://img.shields.io/badge/version-0.1.0-cba6f7?style=for-the-badge" alt="Version" /></a>

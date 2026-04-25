@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2048" height="512" viewBox="0 0 2048 512" role="img" aria-labelledby="title desc">
+  <title id="title">MyPortfolio wordmark</title>
+  <desc id="desc">MyPortfolio wordmark with a three-tab M mark.</desc>
+  <g transform="translate(120 74) scale(.36)">
+    <rect x="218" y="184" width="294" height="658" rx="82"
+          transform="rotate(-8 365 513)"
+          fill="#94e2d5" stroke="#45475a" stroke-width="16"/>
+    <rect x="513" y="184" width="294" height="658" rx="82"
+          transform="rotate(8 660 513)"
+          fill="#cba6f7" stroke="#45475a" stroke-width="16"/>
+    <rect x="365" y="132" width="294" height="760" rx="86"
+          fill="#74c7ec" stroke="#45475a" stroke-width="16"/>
+    <path d="M425 208c0-17.673 14.327-32 32-32h50"
+          stroke="#f5f7ff" stroke-width="18" stroke-linecap="round" opacity=".52"/>
+    <path d="M572 184h24c17.673 0 32 14.327 32 32v36"
+          stroke="#f5f7ff" stroke-width="14" stroke-linecap="round" opacity=".36"/>
+    <path d="M286 286c0-17.673 14.327-32 32-32h24"
+          stroke="#f5f7ff" stroke-width="14" stroke-linecap="round" opacity=".34"/>
+    <path d="M686 282c0-17.673 14.327-32 32-32h18"
+          stroke="#f5f7ff" stroke-width="14" stroke-linecap="round" opacity=".34"/>
+  </g>
+  <g transform="translate(545 142)">
+    <rect x="0" y="18" width="40" height="206" rx="20" fill="#cba6f7"/>
+    <rect x="52" y="0" width="40" height="224" rx="20" fill="#74c7ec"/>
+    <rect x="104" y="18" width="40" height="206" rx="20" fill="#94e2d5"/>
+    <text x="170" y="196"
+          fill="#cdd6f4"
+          font-family="Segoe UI"
+          font-size="180"
+          font-weight="700"
+          letter-spacing="0">yPortfolio</text>
+  </g>
+</svg>

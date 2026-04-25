@@ -8,6 +8,7 @@
         xmlns:conv="clr-namespace:MyPortfolio.Converters"
         Title="MyPortfolio" Height="900" Width="1360"
         MinWidth="980" MinHeight="680"
+        Icon="Assets/icon.ico"
         WindowStartupLocation="CenterScreen">
     <Window.DataContext>
         <local:MainViewModel />
@@ -42,11 +43,15 @@
                 </Grid.ColumnDefinitions>
 
                 <Border Grid.Column="0" Width="44" Height="44" CornerRadius="8"
-                        Background="{StaticResource MauveSoftBrush}"
-                        BorderBrush="{StaticResource MauveBrush}"
+                        Background="{StaticResource CrustBrush}"
+                        BorderBrush="{StaticResource Surface1Brush}"
                         BorderThickness="1" Margin="0,0,14,0">
-                    <TextBlock Text="MP" HorizontalAlignment="Center" VerticalAlignment="Center"
-                               FontWeight="SemiBold" Foreground="{StaticResource MauveBrush}" />
+                    <Image Source="Assets/logo.png"
+                           Width="34"
+                           Height="34"
+                           Stretch="Uniform"
+                           RenderOptions.BitmapScalingMode="HighQuality"
+                           ToolTip="MyPortfolio" />
                 </Border>
 
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
