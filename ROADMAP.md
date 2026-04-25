@@ -13,11 +13,12 @@ MyPortfolio uses this file as the public implementation checklist. Local scratch
   - Track and show last-refresh timestamps per tab.
   - Added a settings drawer toggle, startup refresh hook, persisted UTC timestamps, and compact per-tab freshness copy.
 
-## Next
-
-- [ ] v0.4.0 — Multi-owner settings UI
+- [x] v0.4.0 — Multi-owner settings UI
   - Replace the comma-separated extra owners textbox with a chip/list editor.
   - Keep existing comma/semicolon/newline parsing as an import path for compatibility.
+  - Added add/remove/clear chip actions, Enter-to-add handling, duplicate filtering, primary-owner filtering, and pasted-list import.
+
+## Next
 
 - [ ] v0.5.0 — Theme expansion
   - Add Catppuccin Latte light theme.

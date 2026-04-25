@@ -29,6 +29,14 @@ public partial class MainWindow : Window
             vm.GitHubTokenInput = GitHubTokenBox.Password;
     }
 
+    private void ExtraOwnerBox_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter || DataContext is not MainViewModel vm) return;
+        if (!vm.AddExtraOwnerCommand.CanExecute(null)) return;
+        vm.AddExtraOwnerCommand.Execute(null);
+        e.Handled = true;
+    }
+
     private void OnWindowKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.Escape && SettingsDrawer.Visibility == Visibility.Visible)

@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Windows.Input;
 using MyPortfolio.Android.ViewModels;
 using MyPortfolio.Chrome.ViewModels;
@@ -22,7 +23,7 @@ public sealed class MainViewModel : ViewModelBase
     private string _statusText = "Ready.";
     private string _githubUserInput;
     private string _githubTokenInput;
-    private string _extraOwnersInput;
+    private string _extraOwnerEntry = string.Empty;
 
     public DesktopTabViewModel DesktopTab { get; }
     public ChromeTabViewModel ChromeTab { get; }
@@ -35,6 +36,11 @@ public sealed class MainViewModel : ViewModelBase
     public ICommand RefreshAllCommand { get; }
     public ICommand ClearLogCommand { get; }
     public ICommand ClearHiddenReposCommand { get; }
+    public ICommand AddExtraOwnerCommand { get; }
+    public ICommand RemoveExtraOwnerCommand { get; }
+    public ICommand ClearExtraOwnersCommand { get; }
+
+    public ObservableCollection<string> ExtraOwners { get; } = new();
 
     public MainViewModel()
     {
@@ -46,7 +52,8 @@ public sealed class MainViewModel : ViewModelBase
 
         _githubUserInput = _settings.GitHubUser;
         _githubTokenInput = _settings.GitHubToken ?? string.Empty;
-        _extraOwnersInput = string.Join(", ", _settings.ExtraOwners);
+        foreach (var owner in _settings.ExtraOwners.Distinct(StringComparer.OrdinalIgnoreCase))
+            ExtraOwners.Add(owner);
 
         DesktopTab = new DesktopTabViewModel(_settingsService, _factory, _http, _log, () => _settings);
         ChromeTab = new ChromeTabViewModel(_settingsService, _factory, _http, _log, () => _settings);
@@ -63,6 +70,9 @@ public sealed class MainViewModel : ViewModelBase
         {
             if (ClearHiddenRepos()) await RefreshAllAsync();
         }, _ => HasHiddenRepos);
+        AddExtraOwnerCommand = new RelayCommand(_ => AddExtraOwnersFromEntry(), _ => CanAddExtraOwner);
+        RemoveExtraOwnerCommand = new RelayCommand(RemoveExtraOwner);
+        ClearExtraOwnersCommand = new RelayCommand(_ => ClearExtraOwners(), _ => HasExtraOwners);
 
         var version = typeof(MainViewModel).Assembly.GetName().Version;
         _log.Append("Shell", $"MyPortfolio v{version} ready.");
@@ -89,11 +99,24 @@ public sealed class MainViewModel : ViewModelBase
         set => SetField(ref _githubTokenInput, value);
     }
 
-    public string ExtraOwnersInput
+    public string ExtraOwnerEntry
     {
-        get => _extraOwnersInput;
-        set => SetField(ref _extraOwnersInput, value);
+        get => _extraOwnerEntry;
+        set
+        {
+            if (SetField(ref _extraOwnerEntry, value))
+            {
+                OnPropertyChanged(nameof(CanAddExtraOwner));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
     }
+
+    public bool HasExtraOwners => ExtraOwners.Count > 0;
+    public bool CanAddExtraOwner => !string.IsNullOrWhiteSpace(ExtraOwnerEntry);
+    public string ExtraOwnerSummary => HasExtraOwners
+        ? $"{ExtraOwners.Count} extra owner(s) included in discovery."
+        : "No extra owners added.";
 
     public bool RefreshOnLaunch
     {
@@ -188,15 +211,14 @@ public sealed class MainViewModel : ViewModelBase
 
         _settings.GitHubUser = user;
         _settings.GitHubToken = string.IsNullOrWhiteSpace(GitHubTokenInput) ? null : GitHubTokenInput.Trim();
-        _settings.ExtraOwners = (ExtraOwnersInput ?? string.Empty)
-            .Split(new[] { ',', '\n', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Where(s => !string.Equals(s, _settings.GitHubUser, StringComparison.OrdinalIgnoreCase))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        AddExtraOwnersFromEntry(showStatus: false);
+        RemovePrimaryOwnerFromExtras(user);
+        _settings.ExtraOwners = ExtraOwners.ToList();
 
         _settingsService.Save(_settings);
         StatusText = "Settings saved locally.";
         _log.Append("Shell", "Settings saved locally.");
+        RefreshExtraOwnerState();
         OnPropertyChanged(nameof(DesktopTopicFilter));
         OnPropertyChanged(nameof(ChromeTopicFilter));
         OnPropertyChanged(nameof(AndroidTopicFilter));
@@ -234,5 +256,90 @@ public sealed class MainViewModel : ViewModelBase
         StatusText = $"Restored {count} hidden repo(s).";
         _log.Append("Shell", $"Restored {count} hidden repo(s) to discovery.");
         return true;
+    }
+
+    private void AddExtraOwnersFromEntry(bool showStatus = true)
+    {
+        var parsed = ParseExtraOwners(ExtraOwnerEntry).ToList();
+        ExtraOwnerEntry = string.Empty;
+        if (parsed.Count == 0)
+        {
+            if (showStatus) StatusText = "Enter an owner before adding.";
+            return;
+        }
+
+        var added = 0;
+        foreach (var owner in parsed)
+        {
+            if (string.Equals(owner, GitHubUserInput.Trim(), StringComparison.OrdinalIgnoreCase)) continue;
+            if (ExtraOwners.Contains(owner, StringComparer.OrdinalIgnoreCase)) continue;
+            ExtraOwners.Add(owner);
+            added++;
+        }
+
+        RefreshExtraOwnerState();
+        if (!showStatus) return;
+        StatusText = added == 0
+            ? "No new owners added."
+            : $"Added {added} owner(s) to discovery.";
+    }
+
+    private static IEnumerable<string> ParseExtraOwners(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) yield break;
+        foreach (var raw in input.Split(new[] { ',', ';', '\n', '\r', '\t', ' ' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var owner = NormalizeOwner(raw);
+            if (!string.IsNullOrWhiteSpace(owner)) yield return owner;
+        }
+    }
+
+    private static string NormalizeOwner(string owner)
+    {
+        var value = owner.Trim().TrimStart('@').Trim('/');
+        const string githubPrefix = "github.com/";
+        var githubIndex = value.IndexOf(githubPrefix, StringComparison.OrdinalIgnoreCase);
+        if (githubIndex >= 0)
+            value = value[(githubIndex + githubPrefix.Length)..];
+        if (value.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            value = value["https://".Length..];
+        if (value.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+            value = value["http://".Length..];
+        var slash = value.IndexOf('/');
+        return slash >= 0 ? value[..slash] : value;
+    }
+
+    private void RemoveExtraOwner(object? owner)
+    {
+        if (owner is not string value) return;
+        ExtraOwners.Remove(value);
+        RefreshExtraOwnerState();
+        StatusText = $"Removed {value} from discovery.";
+    }
+
+    private void ClearExtraOwners()
+    {
+        if (ExtraOwners.Count == 0) return;
+        var count = ExtraOwners.Count;
+        ExtraOwners.Clear();
+        RefreshExtraOwnerState();
+        StatusText = $"Removed {count} extra owner(s).";
+    }
+
+    private void RemovePrimaryOwnerFromExtras(string primaryOwner)
+    {
+        var duplicates = ExtraOwners
+            .Where(owner => string.Equals(owner, primaryOwner, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        foreach (var duplicate in duplicates)
+            ExtraOwners.Remove(duplicate);
+    }
+
+    private void RefreshExtraOwnerState()
+    {
+        OnPropertyChanged(nameof(HasExtraOwners));
+        OnPropertyChanged(nameof(ExtraOwnerSummary));
+        OnPropertyChanged(nameof(CanAddExtraOwner));
+        CommandManager.InvalidateRequerySuggested();
     }
 }

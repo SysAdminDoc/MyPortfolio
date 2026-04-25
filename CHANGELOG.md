@@ -7,6 +7,7 @@ All notable changes to MyPortfolio are documented here. Format follows [Keep a C
 ### Added
 - Refresh-on-launch setting that runs the shared discovery pass after startup when enabled.
 - Per-tab last-refresh timestamps for Desktop, Chrome, and Android discovery surfaces.
+- Extra-owner chip editor with add, remove, clear, Enter-to-add, and pasted-list import support.
 - Tracked public roadmap file for completed and upcoming implementation passes.
 
 ## v0.1.0 — 2026-04-25

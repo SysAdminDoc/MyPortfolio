@@ -72,7 +72,7 @@ dotnet build src/MyPortfolio/MyPortfolio.csproj -c Release
 1. Click **Settings** (top-right).
 2. Set your **GitHub user / org** (defaults to `SysAdminDoc`).
 3. *(Optional)* Paste a personal access token to raise the rate limit and surface private repos.
-4. *(Optional)* Add **extra owners** — comma-separated GitHub usernames to pull into discovery.
+4. *(Optional)* Add **extra owners** — use the chip editor for collaborator users / orgs, or paste a comma / semicolon / newline-separated list.
 5. Toggle topic filters per tab if you want to scope discovery (`windows-app`, `chrome-extension`, `android-app` are the suggested defaults).
 6. Enable **Refresh all tabs when MyPortfolio starts** if you want discovery to run automatically on launch.
 7. Click **Save and refresh all** — every tab populates simultaneously.

@@ -123,11 +123,70 @@
                         <TextBlock Style="{StaticResource MuteText}" TextWrapping="Wrap" Margin="0,7,0,0"
                                    Text="Optional. Stored only in your local settings file. Boosts the rate limit from 60/h to 5,000/h and surfaces private repos." />
 
-                        <TextBlock Text="Extra owners (comma-separated)"
+                        <TextBlock Text="Extra owners"
                                    Style="{StaticResource InputLabel}" Margin="0,12,0,5" />
-                        <TextBox Text="{Binding ExtraOwnersInput, UpdateSourceTrigger=PropertyChanged}" />
-                        <TextBlock Style="{StaticResource MuteText}" TextWrapping="Wrap" Margin="0,7,0,0"
-                                   Text="Pull additional users / orgs into discovery. Useful for collaborator accounts." />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid Grid.Column="0">
+                                <TextBox x:Name="ExtraOwnerBox"
+                                         Text="{Binding ExtraOwnerEntry, UpdateSourceTrigger=PropertyChanged}"
+                                         KeyDown="ExtraOwnerBox_KeyDown" />
+                                <TextBlock Text="owner or comma-separated owners"
+                                           Style="{StaticResource MuteText}"
+                                           Margin="12,0,0,0"
+                                           VerticalAlignment="Center"
+                                           IsHitTestVisible="False"
+                                           Visibility="{Binding Text, ElementName=ExtraOwnerBox, Converter={StaticResource EmptyStringToVis}}" />
+                            </Grid>
+                            <Button Grid.Column="1"
+                                    Content="Add"
+                                    Command="{Binding AddExtraOwnerCommand}"
+                                    IsEnabled="{Binding CanAddExtraOwner}"
+                                    Margin="8,0,0,0" />
+                        </Grid>
+                        <TextBlock Text="{Binding ExtraOwnerSummary}" Style="{StaticResource MuteText}"
+                                   TextWrapping="Wrap" Margin="0,7,0,0" />
+                        <ItemsControl ItemsSource="{Binding ExtraOwners}" Margin="0,8,0,0">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource SapphireSoftBrush}"
+                                            BorderBrush="{StaticResource SapphireBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="7"
+                                            Padding="8,4"
+                                            Margin="0,0,6,6">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding}" Style="{StaticResource BadgeText}"
+                                                       Foreground="{StaticResource SapphireBrush}" />
+                                            <Button Content="x"
+                                                    Command="{Binding DataContext.RemoveExtraOwnerCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource LinkButton}"
+                                                    Padding="6,0"
+                                                    MinHeight="20"
+                                                    Margin="6,0,0,0"
+                                                    ToolTip="Remove owner" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Button Content="Clear extra owners"
+                                Command="{Binding ClearExtraOwnersCommand}"
+                                IsEnabled="{Binding HasExtraOwners}"
+                                Style="{StaticResource LinkButton}"
+                                HorizontalAlignment="Left"
+                                Margin="-8,0,0,0" />
+                        <TextBlock Style="{StaticResource MuteText}" TextWrapping="Wrap" Margin="0,4,0,0"
+                                   Text="Pull additional users or orgs into discovery. Pasted comma, semicolon, newline, or space-separated lists are still accepted." />
 
                         <CheckBox Content="Refresh all tabs when MyPortfolio starts"
                                   IsChecked="{Binding RefreshOnLaunch}"
