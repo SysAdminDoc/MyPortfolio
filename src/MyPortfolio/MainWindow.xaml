@@ -128,6 +128,12 @@
                         <TextBox Text="{Binding ExtraOwnersInput, UpdateSourceTrigger=PropertyChanged}" />
                         <TextBlock Style="{StaticResource MuteText}" TextWrapping="Wrap" Margin="0,7,0,0"
                                    Text="Pull additional users / orgs into discovery. Useful for collaborator accounts." />
+
+                        <CheckBox Content="Refresh all tabs when MyPortfolio starts"
+                                  IsChecked="{Binding RefreshOnLaunch}"
+                                  Margin="0,14,0,0" />
+                        <TextBlock Style="{StaticResource MuteText}" TextWrapping="Wrap" Margin="26,6,0,0"
+                                   Text="Runs the same discovery pass as Refresh all and updates each tab's last-refresh timestamp." />
                     </StackPanel>
 
                     <!-- Per-tab knobs (left + middle column) -->

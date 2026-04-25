@@ -11,4 +11,11 @@ internal static class Format
         while (v >= 1024 && i < u.Length - 1) { v /= 1024; i++; }
         return $"{v:0.##} {u[i]}";
     }
+
+    public static string LastRefresh(DateTimeOffset? refreshedUtc)
+    {
+        if (refreshedUtc is null) return "Last refreshed: never";
+        var local = refreshedUtc.Value.ToLocalTime();
+        return $"Last refreshed: {local:MMM d, h:mm tt}";
+    }
 }

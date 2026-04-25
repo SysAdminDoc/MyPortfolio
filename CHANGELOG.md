@@ -2,6 +2,13 @@
 
 All notable changes to MyPortfolio are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Added
+- Refresh-on-launch setting that runs the shared discovery pass after startup when enabled.
+- Per-tab last-refresh timestamps for Desktop, Chrome, and Android discovery surfaces.
+- Tracked public roadmap file for completed and upcoming implementation passes.
+
 ## v0.1.0 — 2026-04-25
 
 Initial release. Unifies LocalDesktopStore, LocalChromeStore, and LocalAndroidStore into a single Windows desktop catalog backed by GitHub releases.

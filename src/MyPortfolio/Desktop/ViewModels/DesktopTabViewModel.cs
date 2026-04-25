@@ -78,6 +78,7 @@ public sealed class DesktopTabViewModel : ViewModelBase
     public int AvailableCount => Apps.Count;
     public int VisibleCount => AppsView.Cast<object>().Count();
     public string RefreshButtonLabel => Busy ? "Refreshing..." : "Refresh desktop apps";
+    public string LastRefreshText => Format.LastRefresh(_settingsAccessor().DesktopLastRefreshUtc);
     public bool ShowEmptyState => !Busy && VisibleCount == 0;
     public string EmptyStateTitle => AvailableCount == 0
         ? "No desktop apps discovered yet"
@@ -118,6 +119,7 @@ public sealed class DesktopTabViewModel : ViewModelBase
             }
             RefreshView();
             RefreshMetrics();
+            MarkRefreshed();
             _log.Append("Desktop", $"Found {Apps.Count} app(s) — {InstalledCount} installed.");
         }
         catch (Exception ex)
@@ -154,8 +156,17 @@ public sealed class DesktopTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(InstalledCount));
         OnPropertyChanged(nameof(AvailableCount));
         OnPropertyChanged(nameof(VisibleCount));
+        OnPropertyChanged(nameof(LastRefreshText));
         OnPropertyChanged(nameof(ShowEmptyState));
         OnPropertyChanged(nameof(EmptyStateTitle));
         OnPropertyChanged(nameof(EmptyStateMessage));
+    }
+
+    private void MarkRefreshed()
+    {
+        var cfg = _settingsAccessor();
+        cfg.DesktopLastRefreshUtc = DateTimeOffset.UtcNow;
+        _settingsService.Save(cfg);
+        OnPropertyChanged(nameof(LastRefreshText));
     }
 }

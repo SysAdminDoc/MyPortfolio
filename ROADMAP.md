@@ -8,11 +8,12 @@ MyPortfolio uses this file as the public implementation checklist. Local scratch
   - Added the Catppuccin three-tab brand mark as SVG, PNG, size variants, multi-resolution Windows ICO, README banner, README logo, and in-app header artwork.
   - Wired the WPF application and main window to the branded icon.
 
-## Next
-
-- [ ] v0.3.0 — Refresh on launch
+- [x] v0.3.0 — Refresh on launch
   - Add a user setting to refresh all tabs after startup.
   - Track and show last-refresh timestamps per tab.
+  - Added a settings drawer toggle, startup refresh hook, persisted UTC timestamps, and compact per-tab freshness copy.
+
+## Next
 
 - [ ] v0.4.0 — Multi-owner settings UI
   - Replace the comma-separated extra owners textbox with a chip/list editor.

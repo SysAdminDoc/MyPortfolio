@@ -111,6 +111,7 @@ public sealed class ChromeTabViewModel : ViewModelBase
     public bool HasInstalledExtensions => InstalledCount > 0;
     public bool CanLaunchBrowser => !Busy && SelectedBrowser != null && HasInstalledExtensions;
     public string RefreshButtonLabel => Busy ? "Refreshing..." : "Refresh extensions";
+    public string LastRefreshText => Format.LastRefresh(_settingsAccessor().ChromeLastRefreshUtc);
     public string BrowserSummary => Browsers.Count == 0
         ? "No supported Chromium browser detected."
         : $"{Browsers.Count} browser(s) detected.";
@@ -155,6 +156,7 @@ public sealed class ChromeTabViewModel : ViewModelBase
             }
             RefreshView();
             RefreshMetrics();
+            MarkRefreshed();
             _log.Append("Chrome", $"Found {Extensions.Count} extension(s) — {InstalledCount} installed.");
         }
         catch (Exception ex) { _log.Append("Chrome", $"! Refresh failed: {ex.Message}"); }
@@ -243,8 +245,17 @@ public sealed class ChromeTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasInstalledExtensions));
         OnPropertyChanged(nameof(CanLaunchBrowser));
         OnPropertyChanged(nameof(VisibleCount));
+        OnPropertyChanged(nameof(LastRefreshText));
         OnPropertyChanged(nameof(ShowEmptyState));
         OnPropertyChanged(nameof(EmptyStateTitle));
         OnPropertyChanged(nameof(EmptyStateMessage));
+    }
+
+    private void MarkRefreshed()
+    {
+        var cfg = _settingsAccessor();
+        cfg.ChromeLastRefreshUtc = DateTimeOffset.UtcNow;
+        _settingsService.Save(cfg);
+        OnPropertyChanged(nameof(LastRefreshText));
     }
 }

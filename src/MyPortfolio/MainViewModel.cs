@@ -95,6 +95,12 @@ public sealed class MainViewModel : ViewModelBase
         set => SetField(ref _extraOwnersInput, value);
     }
 
+    public bool RefreshOnLaunch
+    {
+        get => _settings.RefreshOnLaunch;
+        set { if (_settings.RefreshOnLaunch != value) { _settings.RefreshOnLaunch = value; OnPropertyChanged(); } }
+    }
+
     // Per-tab knobs surface as bound properties on the shared settings drawer.
     public bool DesktopUseTopicFilter
     {
@@ -202,6 +208,18 @@ public sealed class MainViewModel : ViewModelBase
         StatusText = "Refreshing all tabs...";
         await Task.WhenAll(DesktopTab.RefreshAsync(), ChromeTab.RefreshAsync(), AndroidTab.RefreshAsync());
         StatusText = "All tabs refreshed.";
+    }
+
+    public async Task RefreshOnLaunchIfEnabledAsync()
+    {
+        if (!_settings.RefreshOnLaunch) return;
+        _log.Append("Shell", "Refresh on launch is enabled; refreshing all tabs.");
+        try { await RefreshAllAsync(); }
+        catch (Exception ex)
+        {
+            StatusText = "Refresh on launch failed.";
+            _log.Append("Shell", $"! Refresh on launch failed: {ex.Message}");
+        }
     }
 
     private bool ClearHiddenRepos()

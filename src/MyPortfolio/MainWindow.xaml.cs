@@ -9,11 +9,13 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        Loaded += (_, _) =>
+        Loaded += async (_, _) =>
         {
             HookLogAutoScroll();
             SyncTokenBoxFromViewModel();
             SetSettingsDrawerOpen(false);
+            if (DataContext is MainViewModel vm)
+                await vm.RefreshOnLaunchIfEnabledAsync();
         };
         KeyDown += OnWindowKeyDown;
     }

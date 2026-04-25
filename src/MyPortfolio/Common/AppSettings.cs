@@ -12,22 +12,26 @@ public sealed class AppSettings
     public string? GitHubToken { get; set; }
     public List<string> ExtraOwners { get; set; } = new();
     public List<string> HiddenRepos { get; set; } = new();
+    public bool RefreshOnLaunch { get; set; } = false;
 
     // Desktop tab
     public bool DesktopUseTopicFilter { get; set; } = false;
     public string DesktopTopicFilter { get; set; } = "windows-app";
     public bool DesktopVerifyHashSidecar { get; set; } = true;
     public string? DesktopInstallRootOverride { get; set; }
+    public DateTimeOffset? DesktopLastRefreshUtc { get; set; }
 
     // Chrome tab
     public bool ChromeUseTopicFilter { get; set; } = false;
     public string ChromeTopicFilter { get; set; } = "chrome-extension";
     public string? PreferredBrowserPath { get; set; }
     public bool LaunchBrowserAfterInstall { get; set; } = false;
+    public DateTimeOffset? ChromeLastRefreshUtc { get; set; }
 
     // Android tab — download only, never installs
     public bool AndroidUseTopicFilter { get; set; } = false;
     public string AndroidTopicFilter { get; set; } = "android-app";
     public string? AndroidDownloadFolderOverride { get; set; }
     public bool AndroidVerifyHashSidecar { get; set; } = true;
+    public DateTimeOffset? AndroidLastRefreshUtc { get; set; }
 }

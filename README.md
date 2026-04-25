@@ -74,8 +74,11 @@ dotnet build src/MyPortfolio/MyPortfolio.csproj -c Release
 3. *(Optional)* Paste a personal access token to raise the rate limit and surface private repos.
 4. *(Optional)* Add **extra owners** — comma-separated GitHub usernames to pull into discovery.
 5. Toggle topic filters per tab if you want to scope discovery (`windows-app`, `chrome-extension`, `android-app` are the suggested defaults).
-6. Click **Save and refresh all** — every tab populates simultaneously.
-7. Switch between tabs and click **Install** / **Download APK** / **Launch with extensions** as you like.
+6. Enable **Refresh all tabs when MyPortfolio starts** if you want discovery to run automatically on launch.
+7. Click **Save and refresh all** — every tab populates simultaneously.
+8. Switch between tabs and click **Install** / **Download APK** / **Launch with extensions** as you like.
+
+Each tab shows its last successful refresh time beside its catalog summary, so stale discovery state is visible before you install or download anything.
 
 Every action streams into the activity log at the bottom of the window. Nothing fails silently; everything is logged in-app and to `%LOCALAPPDATA%\MyPortfolio\logs\`.
 
