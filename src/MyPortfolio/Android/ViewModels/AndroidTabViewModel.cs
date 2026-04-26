@@ -19,6 +19,7 @@ public sealed class AndroidTabViewModel : ViewModelBase
     private bool _busy;
     private string _searchText = string.Empty;
     private bool _showDownloadedOnly;
+    private bool _showDiscoveryDetails;
     private DiscoveryDiagnostics _diagnostics = new();
     private DiscoveryProgress? _refreshProgress;
     private int _refreshProgressVersion;
@@ -28,6 +29,7 @@ public sealed class AndroidTabViewModel : ViewModelBase
 
     public ICommand RefreshCommand { get; }
     public ICommand OpenDownloadFolderCommand { get; }
+    public ICommand ToggleDiscoveryDetailsCommand { get; }
 
     public AndroidTabViewModel(
         SettingsService settingsService,
@@ -49,6 +51,7 @@ public sealed class AndroidTabViewModel : ViewModelBase
 
         RefreshCommand = new AsyncRelayCommand(_ => RefreshAsync(), _ => !Busy);
         OpenDownloadFolderCommand = new RelayCommand(_ => OpenDownloadFolder());
+        ToggleDiscoveryDetailsCommand = new RelayCommand(_ => ToggleDiscoveryDetails(), _ => HasOwnerDiagnostics);
     }
 
     public bool Busy
@@ -101,6 +104,12 @@ public sealed class AndroidTabViewModel : ViewModelBase
     public string DiscoveryWarningText => _diagnostics.WarningText;
     public bool HasRateLimitText => !string.IsNullOrWhiteSpace(RateLimitText);
     public string RateLimitText => _diagnostics.RateLimitText;
+    public IReadOnlyList<OwnerDiscoveryResult> OwnerDiagnostics => _diagnostics.Owners;
+    public bool HasOwnerDiagnostics => _diagnostics.HasOwnerDetails;
+    public bool ShowDiscoveryDetails => _showDiscoveryDetails && HasOwnerDiagnostics;
+    public string DiscoveryDetailsButtonText => ShowDiscoveryDetails
+        ? "Hide owner details"
+        : $"Owner details ({_diagnostics.OwnerCount:N0})";
     public bool HasRefreshProgress => Busy && _refreshProgress is not null;
     public string RefreshProgressText => _refreshProgress?.Text ?? "Preparing refresh";
     public int RefreshProgressValue => _refreshProgress?.Current ?? 0;
@@ -203,6 +212,7 @@ public sealed class AndroidTabViewModel : ViewModelBase
     private void ApplyDiagnostics(DiscoveryDiagnostics diagnostics)
     {
         _diagnostics = diagnostics;
+        if (!_diagnostics.HasOwnerDetails) _showDiscoveryDetails = false;
         RefreshDiagnostics();
     }
 
@@ -214,6 +224,19 @@ public sealed class AndroidTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(DiscoveryWarningText));
         OnPropertyChanged(nameof(HasRateLimitText));
         OnPropertyChanged(nameof(RateLimitText));
+        OnPropertyChanged(nameof(OwnerDiagnostics));
+        OnPropertyChanged(nameof(HasOwnerDiagnostics));
+        OnPropertyChanged(nameof(ShowDiscoveryDetails));
+        OnPropertyChanged(nameof(DiscoveryDetailsButtonText));
+        CommandManager.InvalidateRequerySuggested();
+    }
+
+    private void ToggleDiscoveryDetails()
+    {
+        if (!HasOwnerDiagnostics) return;
+        _showDiscoveryDetails = !ShowDiscoveryDetails;
+        OnPropertyChanged(nameof(ShowDiscoveryDetails));
+        OnPropertyChanged(nameof(DiscoveryDetailsButtonText));
     }
 
     private void UpdateRefreshProgress(DiscoveryProgress progress, int version)

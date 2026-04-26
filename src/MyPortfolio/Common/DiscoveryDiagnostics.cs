@@ -25,6 +25,7 @@ public sealed class DiscoveryDiagnostics
     public int SkippedByTopicCount => Owners.Sum(o => o.SkippedByTopic);
     public int SkippedCount => SkippedArchivedCount + SkippedHiddenCount + SkippedByTopicCount;
     public bool HasDetails => OwnerCount > 0 || RateLimit is not null;
+    public bool HasOwnerDetails => OwnerCount > 0;
     public bool HasWarnings => FailedOwners > 0 || ProbeFailureCount > 0 || RateLimit?.IsLow == true;
 
     public OwnerDiscoveryResult AddOwner(string owner)
@@ -85,19 +86,42 @@ public sealed class OwnerDiscoveryResult
     public bool Failed { get; private set; }
     public string? ErrorMessage { get; private set; }
     public bool HasWarning => Failed || ProbeFailures > 0;
+    public int SkippedCount => SkippedArchived + SkippedHidden + SkippedByTopic;
+    public bool HasErrorMessage => Failed && !string.IsNullOrWhiteSpace(ErrorMessage);
+    public string StatusText => Failed ? "Failed" : "Loaded";
+    public string MatchDetailText => Failed
+        ? "No catalog data loaded"
+        : $"{MatchesFound:N0} match(es) from {RepositoriesReturned:N0} repo(s)";
+    public string SkipDetailText => SkippedCount == 0
+        ? "0 skipped"
+        : $"{SkippedCount:N0} skipped: {SkipBreakdown}";
+    public string CacheDetailText => $"{CacheHits:N0} cached";
+    public string ProbeDetailText => $"{ProbeFailures:N0} probe issue(s)";
 
     public string Summary => Failed
         ? $"{Owner}: failed"
         : $"{Owner}: {MatchesFound} match(es) from {RepositoriesReturned} repo(s){SkipSuffix}{(CacheHits > 0 ? $" / {CacheHits} cached" : string.Empty)}";
+
+    private string SkipBreakdown
+    {
+        get
+        {
+            var parts = new List<string>();
+            if (SkippedArchived > 0) parts.Add($"{SkippedArchived:N0} archived");
+            if (SkippedHidden > 0) parts.Add($"{SkippedHidden:N0} hidden");
+            if (SkippedByTopic > 0) parts.Add($"{SkippedByTopic:N0} topic-filtered");
+            return parts.Count == 0 ? "none" : string.Join(", ", parts);
+        }
+    }
 
     private string SkipSuffix
     {
         get
         {
             var parts = new List<string>();
-            if (SkippedArchived > 0) parts.Add($"{SkippedArchived} archived");
-            if (SkippedHidden > 0) parts.Add($"{SkippedHidden} hidden");
-            if (SkippedByTopic > 0) parts.Add($"{SkippedByTopic} topic-filtered");
+            if (SkippedArchived > 0) parts.Add($"{SkippedArchived:N0} archived");
+            if (SkippedHidden > 0) parts.Add($"{SkippedHidden:N0} hidden");
+            if (SkippedByTopic > 0) parts.Add($"{SkippedByTopic:N0} topic-filtered");
             return parts.Count == 0 ? string.Empty : $" / skipped {string.Join(", ", parts)}";
         }
     }

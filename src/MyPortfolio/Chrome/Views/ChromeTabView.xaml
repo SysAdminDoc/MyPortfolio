@@ -92,13 +92,66 @@
                         BorderThickness="0,1,0,0" Padding="0,8,0,0" Margin="0,10,0,0"
                         Visibility="{Binding HasDiscoveryDiagnostics, Converter={StaticResource BoolToVis}}">
                     <StackPanel>
-                        <TextBlock Text="{Binding DiscoverySummary}" Style="{StaticResource MuteText}" TextWrapping="Wrap" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{Binding DiscoverySummary}" Style="{StaticResource MuteText}"
+                                       TextWrapping="Wrap" VerticalAlignment="Center" />
+                            <Button Grid.Column="1" Content="{Binding DiscoveryDetailsButtonText}"
+                                    Command="{Binding ToggleDiscoveryDetailsCommand}"
+                                    Style="{StaticResource LinkButton}" Padding="8,2" MinHeight="24" Margin="12,0,0,0"
+                                    Visibility="{Binding HasOwnerDiagnostics, Converter={StaticResource BoolToVis}}" />
+                        </Grid>
                         <TextBlock Text="{Binding DiscoveryWarningText}" Foreground="{DynamicResource YellowBrush}"
                                    FontSize="11" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,4,0,0"
                                    Visibility="{Binding HasDiscoveryWarning, Converter={StaticResource BoolToVis}}" />
                         <TextBlock Text="{Binding RateLimitText}" Style="{StaticResource MuteText}"
                                    TextWrapping="Wrap" Margin="0,4,0,0"
                                    Visibility="{Binding HasRateLimitText, Converter={StaticResource BoolToVis}}" />
+                        <ScrollViewer MaxHeight="190" VerticalScrollBarVisibility="Auto" Margin="0,8,0,0"
+                                      Visibility="{Binding ShowDiscoveryDetails, Converter={StaticResource BoolToVis}}">
+                            <ItemsControl ItemsSource="{Binding OwnerDiagnostics}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{DynamicResource CrustBrush}"
+                                                BorderBrush="{DynamicResource Surface0Brush}"
+                                                BorderThickness="1" CornerRadius="6"
+                                                Padding="10,8" Margin="0,0,0,6">
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                </Grid.RowDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Owner}"
+                                                           FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" />
+                                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding StatusText}"
+                                                           Style="{StaticResource MuteText}" FontWeight="SemiBold" Margin="12,0,0,0" />
+                                                <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding MatchDetailText}"
+                                                           Style="{StaticResource MuteText}" TextWrapping="Wrap" Margin="0,4,0,0" />
+                                                <WrapPanel Grid.Row="2" Grid.ColumnSpan="2" Margin="0,6,0,0">
+                                                    <TextBlock Text="{Binding SkipDetailText}" Style="{StaticResource MuteText}" Margin="0,0,14,0" />
+                                                    <TextBlock Text="{Binding CacheDetailText}" Style="{StaticResource MuteText}" Margin="0,0,14,0" />
+                                                    <TextBlock Text="{Binding ProbeDetailText}" Style="{StaticResource MuteText}" />
+                                                </WrapPanel>
+                                                <TextBlock Grid.Row="3" Grid.ColumnSpan="2" Text="{Binding ErrorMessage}"
+                                                           Foreground="{DynamicResource YellowBrush}" FontSize="11"
+                                                           FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,6,0,0"
+                                                           Visibility="{Binding HasErrorMessage, Converter={StaticResource BoolToVis}}" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
                     </StackPanel>
                 </Border>
             </Grid>

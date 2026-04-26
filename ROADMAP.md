@@ -53,8 +53,13 @@ MyPortfolio uses this file as the public implementation checklist. Local scratch
   - Surface skipped archived, hidden, and topic-filtered repo counts without expanding the activity log.
   - Added structured discovery progress reporting, determinate per-tab progress text, and skip summaries in the visible diagnostics row.
 
-## Next
-
-- [ ] v0.12.0 — Discovery detail drilldown
+- [x] v0.12.0 — Discovery detail drilldown
   - Add an expandable per-owner diagnostics view for skipped, cached, failed, and matched repository counts.
   - Keep the compact header summary readable when many owners are configured.
+  - Added an on-demand owner diagnostics section with matched, skipped, cached, failed, and probe-issue counts in a bounded detail list.
+
+## Next
+
+- [ ] v0.13.0 — Diagnostics support bundle
+  - Add a one-click copy/export action for the compact diagnostics summary and expanded owner breakdown.
+  - Include rate-limit state and recent activity-log lines without exposing the saved GitHub token.
