@@ -7,6 +7,8 @@ namespace MyPortfolio.Android.Services;
 public sealed class AndroidGitHubService
 {
     private readonly GitHubClientFactory _factory;
+    private readonly DiscoveryProbeCache<AndroidAppInfo> _probeCache = new(DiscoveryCacheDefaults.BriefProbeTtl);
+    private readonly DiscoveryProbeCache<List<string>> _topicCache = new(DiscoveryCacheDefaults.BriefProbeTtl);
 
     public AndroidGitHubService(GitHubClientFactory factory) { _factory = factory; }
 
@@ -19,8 +21,11 @@ public sealed class AndroidGitHubService
     {
         var client = _factory.Get(cfg);
         var owners = OwnerList(cfg);
+        var cacheScope = DiscoveryCacheKey.Scope(cfg);
         var result = new CatalogDiscoveryResult<AndroidAppInfo>();
         var stopDiscovery = false;
+        _probeCache.ClearExpired();
+        _topicCache.ClearExpired();
 
         foreach (var owner in owners)
         {
@@ -29,7 +34,7 @@ public sealed class AndroidGitHubService
             IReadOnlyList<Repository> repos;
             try
             {
-                repos = await client.Repository.GetAllForUser(owner);
+                repos = await client.Repository.GetAllForUser(owner, new ApiOptions { PageSize = 100 });
                 result.Diagnostics.RateLimit = GitHubRateLimitSnapshot.FromClient(client) ?? result.Diagnostics.RateLimit;
             }
             catch (RateLimitExceededException ex)
@@ -68,7 +73,7 @@ public sealed class AndroidGitHubService
                 {
                     if (cfg.AndroidUseTopicFilter && !string.IsNullOrWhiteSpace(cfg.AndroidTopicFilter))
                     {
-                        var topics = await SafeGetTopics(client, repo);
+                        var topics = await SafeGetTopics(client, repo, cacheScope, ownerResult);
                         if (topics is null || !topics.Any(t => t.Equals(cfg.AndroidTopicFilter, StringComparison.OrdinalIgnoreCase)))
                         {
                             ownerResult.SkippedByTopic++;
@@ -76,7 +81,7 @@ public sealed class AndroidGitHubService
                         }
                     }
 
-                    var info = await ProbeRepoAsync(client, repo, log, ct);
+                    var info = await ProbeRepoAsync(client, repo, log, cacheScope, ownerResult, ct);
                     result.Diagnostics.RateLimit = GitHubRateLimitSnapshot.FromClient(client) ?? result.Diagnostics.RateLimit;
                     if (info != null)
                     {
@@ -121,28 +126,48 @@ public sealed class AndroidGitHubService
         return owners.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 
-    private static async Task<List<string>?> SafeGetTopics(GitHubClient client, Repository repo)
+    private async Task<List<string>?> SafeGetTopics(GitHubClient client, Repository repo, string cacheScope, OwnerDiscoveryResult ownerResult)
     {
+        var cacheKey = DiscoveryCacheKey.Repo(cacheScope, repo.Owner.Login, repo.Name, "topics");
+        if (_topicCache.TryGet(cacheKey, out var cachedTopics))
+        {
+            ownerResult.CacheHits++;
+            return cachedTopics;
+        }
+
         try
         {
             var topics = await client.Repository.GetAllTopics(repo.Id);
-            return topics?.Names?.ToList();
+            var names = topics?.Names?.ToList();
+            if (names != null) _topicCache.Set(cacheKey, names);
+            return names;
         }
         catch (RateLimitExceededException) { throw; }
         catch (SecondaryRateLimitExceededException) { throw; }
         catch { return null; }
     }
 
-    private async Task<AndroidAppInfo?> ProbeRepoAsync(GitHubClient client, Repository repo, IProgress<string>? log, CancellationToken ct)
+    private async Task<AndroidAppInfo?> ProbeRepoAsync(GitHubClient client, Repository repo, IProgress<string>? log, string cacheScope, OwnerDiscoveryResult ownerResult, CancellationToken ct)
     {
+        var cacheKey = DiscoveryCacheKey.Repo(cacheScope, repo.Owner.Login, repo.Name, "android-release");
+        if (_probeCache.TryGet(cacheKey, out var cachedInfo))
+        {
+            ownerResult.CacheHits++;
+            return cachedInfo;
+        }
+
         Release? release = null;
         try { release = await client.Repository.Release.GetLatest(repo.Owner.Login, repo.Name); }
-        catch (NotFoundException) { return null; }
+        catch (NotFoundException) { _probeCache.Set(cacheKey, null); return null; }
         catch (RateLimitExceededException) { throw; }
         catch (SecondaryRateLimitExceededException) { throw; }
         catch (Exception) { throw; }
 
-        if (release == null || release.Assets.Count == 0) return null;
+        if (release == null || release.Assets.Count == 0)
+        {
+            _probeCache.Set(cacheKey, null);
+            return null;
+        }
 
         // Pick the largest .apk asset. Many releases ship debug + release; bigger is usually
         // the signed release build. AAB and source-zip aren't installable so we skip them.
@@ -151,13 +176,17 @@ public sealed class AndroidGitHubService
             .OrderByDescending(a => a.Size)
             .FirstOrDefault();
 
-        if (apk == null) return null;
+        if (apk == null)
+        {
+            _probeCache.Set(cacheKey, null);
+            return null;
+        }
 
         var sidecar = release.Assets.FirstOrDefault(a =>
             a.Name.Equals($"{apk.Name}.sha256.txt", StringComparison.OrdinalIgnoreCase)
             || a.Name.Equals($"{apk.Name}.sha256", StringComparison.OrdinalIgnoreCase));
 
-        return new AndroidAppInfo
+        var info = new AndroidAppInfo
         {
             RepoOwner = repo.Owner.Login,
             RepoName = repo.Name,
@@ -172,5 +201,7 @@ public sealed class AndroidGitHubService
             PublishedAt = release.PublishedAt,
             IconUrl = $"https://raw.githubusercontent.com/{repo.Owner.Login}/{repo.Name}/HEAD/logo.png"
         };
+        _probeCache.Set(cacheKey, info);
+        return info;
     }
 }

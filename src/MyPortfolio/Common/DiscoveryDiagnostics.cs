@@ -19,6 +19,7 @@ public sealed class DiscoveryDiagnostics
     public int RepositoryCount => Owners.Sum(o => o.RepositoriesReturned);
     public int MatchCount => Owners.Sum(o => o.MatchesFound);
     public int ProbeFailureCount => Owners.Sum(o => o.ProbeFailures);
+    public int CacheHitCount => Owners.Sum(o => o.CacheHits);
     public bool HasDetails => OwnerCount > 0 || RateLimit is not null;
     public bool HasWarnings => FailedOwners > 0 || ProbeFailureCount > 0 || RateLimit?.IsLow == true;
 
@@ -35,7 +36,7 @@ public sealed class DiscoveryDiagnostics
         {
             if (OwnerCount == 0) return string.Empty;
             if (OwnerCount == 1) return Owners[0].Summary;
-            return $"{SuccessfulOwners}/{OwnerCount} owners loaded / {RepositoryCount} repos scanned / {MatchCount} match(es)";
+            return $"{SuccessfulOwners}/{OwnerCount} owners loaded / {RepositoryCount} repos scanned / {MatchCount} match(es){CacheSuffix(CacheHitCount)}";
         }
     }
 
@@ -57,6 +58,9 @@ public sealed class DiscoveryDiagnostics
     }
 
     public string RateLimitText => RateLimit?.Summary ?? string.Empty;
+
+    private static string CacheSuffix(int cacheHits)
+        => cacheHits > 0 ? $" / {cacheHits} cached" : string.Empty;
 }
 
 public sealed class OwnerDiscoveryResult
@@ -70,13 +74,14 @@ public sealed class OwnerDiscoveryResult
     public int SkippedHidden { get; set; }
     public int SkippedByTopic { get; set; }
     public int ProbeFailures { get; set; }
+    public int CacheHits { get; set; }
     public bool Failed { get; private set; }
     public string? ErrorMessage { get; private set; }
     public bool HasWarning => Failed || ProbeFailures > 0;
 
     public string Summary => Failed
         ? $"{Owner}: failed"
-        : $"{Owner}: {MatchesFound} match(es) from {RepositoriesReturned} repo(s)";
+        : $"{Owner}: {MatchesFound} match(es) from {RepositoriesReturned} repo(s){(CacheHits > 0 ? $" / {CacheHits} cached" : string.Empty)}";
 
     public string WarningSummary
     {

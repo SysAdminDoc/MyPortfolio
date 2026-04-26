@@ -8,6 +8,8 @@ public sealed class DesktopGitHubService
 {
     private readonly GitHubClientFactory _factory;
     private readonly HttpDownloader _http;
+    private readonly DiscoveryProbeCache<AppInfo> _probeCache = new(DiscoveryCacheDefaults.BriefProbeTtl);
+    private readonly DiscoveryProbeCache<List<string>> _topicCache = new(DiscoveryCacheDefaults.BriefProbeTtl);
 
     public DesktopGitHubService(GitHubClientFactory factory, HttpDownloader http)
     {
@@ -23,8 +25,11 @@ public sealed class DesktopGitHubService
     {
         var client = _factory.Get(cfg);
         var owners = OwnerList(cfg);
+        var cacheScope = DiscoveryCacheKey.Scope(cfg);
         var result = new CatalogDiscoveryResult<AppInfo>();
         var stopDiscovery = false;
+        _probeCache.ClearExpired();
+        _topicCache.ClearExpired();
 
         foreach (var owner in owners)
         {
@@ -33,7 +38,7 @@ public sealed class DesktopGitHubService
             IReadOnlyList<Repository> repos;
             try
             {
-                repos = await client.Repository.GetAllForUser(owner);
+                repos = await client.Repository.GetAllForUser(owner, new ApiOptions { PageSize = 100 });
                 result.Diagnostics.RateLimit = GitHubRateLimitSnapshot.FromClient(client) ?? result.Diagnostics.RateLimit;
             }
             catch (RateLimitExceededException ex)
@@ -72,7 +77,7 @@ public sealed class DesktopGitHubService
                 {
                     if (cfg.DesktopUseTopicFilter && !string.IsNullOrWhiteSpace(cfg.DesktopTopicFilter))
                     {
-                        var topics = await SafeGetTopics(client, repo);
+                        var topics = await SafeGetTopics(client, repo, cacheScope, ownerResult);
                         if (topics is null || !topics.Any(t => t.Equals(cfg.DesktopTopicFilter, StringComparison.OrdinalIgnoreCase)))
                         {
                             ownerResult.SkippedByTopic++;
@@ -80,7 +85,7 @@ public sealed class DesktopGitHubService
                         }
                     }
 
-                    var info = await ProbeRepoAsync(client, repo, log, ct);
+                    var info = await ProbeRepoAsync(client, repo, log, cacheScope, ownerResult, ct);
                     result.Diagnostics.RateLimit = GitHubRateLimitSnapshot.FromClient(client) ?? result.Diagnostics.RateLimit;
                     if (info != null)
                     {
@@ -125,28 +130,48 @@ public sealed class DesktopGitHubService
         return owners.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 
-    private static async Task<List<string>?> SafeGetTopics(GitHubClient client, Repository repo)
+    private async Task<List<string>?> SafeGetTopics(GitHubClient client, Repository repo, string cacheScope, OwnerDiscoveryResult ownerResult)
     {
+        var cacheKey = DiscoveryCacheKey.Repo(cacheScope, repo.Owner.Login, repo.Name, "topics");
+        if (_topicCache.TryGet(cacheKey, out var cachedTopics))
+        {
+            ownerResult.CacheHits++;
+            return cachedTopics;
+        }
+
         try
         {
             var topics = await client.Repository.GetAllTopics(repo.Id);
-            return topics?.Names?.ToList();
+            var names = topics?.Names?.ToList();
+            if (names != null) _topicCache.Set(cacheKey, names);
+            return names;
         }
         catch (RateLimitExceededException) { throw; }
         catch (SecondaryRateLimitExceededException) { throw; }
         catch { return null; }
     }
 
-    private async Task<AppInfo?> ProbeRepoAsync(GitHubClient client, Repository repo, IProgress<string>? log, CancellationToken ct)
+    private async Task<AppInfo?> ProbeRepoAsync(GitHubClient client, Repository repo, IProgress<string>? log, string cacheScope, OwnerDiscoveryResult ownerResult, CancellationToken ct)
     {
+        var cacheKey = DiscoveryCacheKey.Repo(cacheScope, repo.Owner.Login, repo.Name, "desktop-release");
+        if (_probeCache.TryGet(cacheKey, out var cachedInfo))
+        {
+            ownerResult.CacheHits++;
+            return cachedInfo;
+        }
+
         Release? release = null;
         try { release = await client.Repository.Release.GetLatest(repo.Owner.Login, repo.Name); }
-        catch (NotFoundException) { return null; }
+        catch (NotFoundException) { _probeCache.Set(cacheKey, null); return null; }
         catch (RateLimitExceededException) { throw; }
         catch (SecondaryRateLimitExceededException) { throw; }
         catch (Exception) { throw; }
 
-        if (release == null || release.Assets.Count == 0) return null;
+        if (release == null || release.Assets.Count == 0)
+        {
+            _probeCache.Set(cacheKey, null);
+            return null;
+        }
 
         var classified = release.Assets
             .Select(a => (Asset: a, Kind: AssetClassifier.ClassifyByName(a.Name)))
@@ -156,13 +181,17 @@ public sealed class DesktopGitHubService
             .ToList();
 
         var best = classified.FirstOrDefault();
-        if (best.Asset == null) return null;
+        if (best.Asset == null)
+        {
+            _probeCache.Set(cacheKey, null);
+            return null;
+        }
 
         var sidecar = release.Assets.FirstOrDefault(a =>
             a.Name.Equals($"{best.Asset.Name}.sha256.txt", StringComparison.OrdinalIgnoreCase)
             || a.Name.Equals($"{best.Asset.Name}.sha256", StringComparison.OrdinalIgnoreCase));
 
-        return new AppInfo
+        var info = new AppInfo
         {
             RepoOwner = repo.Owner.Login,
             RepoName = repo.Name,
@@ -178,5 +207,7 @@ public sealed class DesktopGitHubService
             PublishedAt = release.PublishedAt,
             IconUrl = $"https://raw.githubusercontent.com/{repo.Owner.Login}/{repo.Name}/HEAD/logo.png"
         };
+        _probeCache.Set(cacheKey, info);
+        return info;
     }
 }

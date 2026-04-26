@@ -11,6 +11,8 @@ public sealed class ChromeGitHubService
 {
     private readonly GitHubClientFactory _factory;
     private readonly HttpDownloader _http;
+    private readonly DiscoveryProbeCache<ExtensionInfo> _probeCache = new(DiscoveryCacheDefaults.BriefProbeTtl);
+    private readonly DiscoveryProbeCache<List<string>> _topicCache = new(DiscoveryCacheDefaults.BriefProbeTtl);
 
     public ChromeGitHubService(GitHubClientFactory factory, HttpDownloader http)
     {
@@ -22,8 +24,11 @@ public sealed class ChromeGitHubService
     {
         var client = _factory.Get(cfg);
         var owners = OwnerList(cfg);
+        var cacheScope = DiscoveryCacheKey.Scope(cfg);
         var result = new CatalogDiscoveryResult<ExtensionInfo>();
         var stopDiscovery = false;
+        _probeCache.ClearExpired();
+        _topicCache.ClearExpired();
 
         foreach (var owner in owners)
         {
@@ -32,7 +37,7 @@ public sealed class ChromeGitHubService
             IReadOnlyList<Repository> repos;
             try
             {
-                repos = await client.Repository.GetAllForUser(owner);
+                repos = await client.Repository.GetAllForUser(owner, new ApiOptions { PageSize = 100 });
                 result.Diagnostics.RateLimit = GitHubRateLimitSnapshot.FromClient(client) ?? result.Diagnostics.RateLimit;
             }
             catch (RateLimitExceededException ex)
@@ -71,7 +76,7 @@ public sealed class ChromeGitHubService
                 {
                     if (cfg.ChromeUseTopicFilter && !string.IsNullOrWhiteSpace(cfg.ChromeTopicFilter))
                     {
-                        var topics = await SafeGetTopics(client, repo);
+                        var topics = await SafeGetTopics(client, repo, cacheScope, ownerResult);
                         if (topics is null || !topics.Any(t => t.Equals(cfg.ChromeTopicFilter, StringComparison.OrdinalIgnoreCase)))
                         {
                             ownerResult.SkippedByTopic++;
@@ -79,7 +84,7 @@ public sealed class ChromeGitHubService
                         }
                     }
 
-                    var info = await ProbeRepoAsync(client, repo, log, ct);
+                    var info = await ProbeRepoAsync(client, repo, log, cacheScope, ownerResult, ct);
                     result.Diagnostics.RateLimit = GitHubRateLimitSnapshot.FromClient(client) ?? result.Diagnostics.RateLimit;
                     if (info != null)
                     {
@@ -124,20 +129,36 @@ public sealed class ChromeGitHubService
         return owners.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 
-    private static async Task<List<string>?> SafeGetTopics(GitHubClient client, Repository repo)
+    private async Task<List<string>?> SafeGetTopics(GitHubClient client, Repository repo, string cacheScope, OwnerDiscoveryResult ownerResult)
     {
+        var cacheKey = DiscoveryCacheKey.Repo(cacheScope, repo.Owner.Login, repo.Name, "topics");
+        if (_topicCache.TryGet(cacheKey, out var cachedTopics))
+        {
+            ownerResult.CacheHits++;
+            return cachedTopics;
+        }
+
         try
         {
             var topics = await client.Repository.GetAllTopics(repo.Id);
-            return topics?.Names?.ToList();
+            var names = topics?.Names?.ToList();
+            if (names != null) _topicCache.Set(cacheKey, names);
+            return names;
         }
         catch (RateLimitExceededException) { throw; }
         catch (SecondaryRateLimitExceededException) { throw; }
         catch { return null; }
     }
 
-    private async Task<ExtensionInfo?> ProbeRepoAsync(GitHubClient client, Repository repo, IProgress<string>? log, CancellationToken ct)
+    private async Task<ExtensionInfo?> ProbeRepoAsync(GitHubClient client, Repository repo, IProgress<string>? log, string cacheScope, OwnerDiscoveryResult ownerResult, CancellationToken ct)
     {
+        var cacheKey = DiscoveryCacheKey.Repo(cacheScope, repo.Owner.Login, repo.Name, "chrome-probe");
+        if (_probeCache.TryGet(cacheKey, out var cachedInfo))
+        {
+            ownerResult.CacheHits++;
+            return cachedInfo;
+        }
+
         Release? release = null;
         try { release = await client.Repository.Release.GetLatest(repo.Owner.Login, repo.Name); }
         catch (NotFoundException) { /* no releases */ }
@@ -157,7 +178,11 @@ public sealed class ChromeGitHubService
         }
 
         var hasManifest = asset != null || await RepoHasManifestAsync(client, repo, ct);
-        if (!hasManifest) return null;
+        if (!hasManifest)
+        {
+            _probeCache.Set(cacheKey, null);
+            return null;
+        }
 
         var info = new ExtensionInfo
         {
@@ -183,6 +208,7 @@ public sealed class ChromeGitHubService
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
         catch (Exception ex) { log?.Report($"  ~ manifest probe failed for {repo.Name}: {ex.Message}"); }
 
+        _probeCache.Set(cacheKey, info);
         return info;
     }
 

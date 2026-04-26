@@ -38,8 +38,13 @@ MyPortfolio uses this file as the public implementation checklist. Local scratch
   - Add clearer per-owner discovery summaries when one configured owner fails and others still load.
   - Added visible per-tab discovery diagnostics with owner summaries, partial-failure warnings, probe issue counts, and current GitHub API quota.
 
-## Next
-
-- [ ] v0.9.0 — Discovery performance controls
+- [x] v0.9.0 — Discovery performance controls
   - Add a per-tab owner/repo concurrency cap or staged refresh mode.
   - Cache release probes briefly to avoid repeated refreshes burning GitHub API quota.
+  - Kept discovery serial to avoid secondary-rate bursts, raised repo-list page size to 100, and added a five-minute token-aware cache for release/topic probes with visible cache-hit counts.
+
+## Next
+
+- [ ] v0.10.0 — Refresh recovery controls
+  - Add cancellation for long-running refresh-all passes.
+  - Add clearer retry/backoff guidance after primary or secondary GitHub rate-limit stops.
