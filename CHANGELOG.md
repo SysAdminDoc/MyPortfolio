@@ -15,6 +15,7 @@ All notable changes to MyPortfolio are documented here. Format follows [Keep a C
 - Per-tab discovery diagnostics that show owner scan summaries, partial-failure warnings, repo probe issues, and GitHub API quota after refresh.
 - Short-lived, token-aware discovery probe cache plus larger GitHub repo-list pages to reduce repeated refresh quota usage.
 - Staged refresh-all flow with cancellation and clearer GitHub primary/secondary rate-limit retry guidance.
+- Per-tab refresh progress text and counts with visible skipped archived, hidden, and topic-filtered repository summaries.
 - Tracked public roadmap file for completed and upcoming implementation passes.
 
 ## v0.1.0 — 2026-04-25

@@ -21,7 +21,11 @@ public sealed class DesktopGitHubService
     /// Discover desktop-app candidates: every repo whose latest release ships an MSI,
     /// EXE installer, or portable ZIP that the AssetClassifier accepts.
     /// </summary>
-    public async Task<CatalogDiscoveryResult<AppInfo>> DiscoverAsync(AppSettings cfg, IProgress<string>? log = null, CancellationToken ct = default)
+    public async Task<CatalogDiscoveryResult<AppInfo>> DiscoverAsync(
+        AppSettings cfg,
+        IProgress<string>? log = null,
+        CancellationToken ct = default,
+        IProgress<DiscoveryProgress>? progress = null)
     {
         var client = _factory.Get(cfg);
         var owners = OwnerList(cfg);
@@ -34,6 +38,7 @@ public sealed class DesktopGitHubService
         foreach (var owner in owners)
         {
             var ownerResult = result.Diagnostics.AddOwner(owner);
+            progress?.Report(new DiscoveryProgress("Listing owners", result.Diagnostics.OwnerCount, owners.Count, owner));
             log?.Report($"Listing repos for {owner}...");
             IReadOnlyList<Repository> repos;
             try
@@ -63,9 +68,12 @@ public sealed class DesktopGitHubService
 
             ownerResult.RepositoriesReturned = repos.Count;
             log?.Report($"  {repos.Count} repos returned");
+            var repoIndex = 0;
             foreach (var repo in repos)
             {
                 ct.ThrowIfCancellationRequested();
+                repoIndex++;
+                progress?.Report(new DiscoveryProgress($"Scanning {owner}", repoIndex, repos.Count, repo.Name));
                 if (repo.Archived) { ownerResult.SkippedArchived++; continue; }
                 if (cfg.HiddenRepos.Contains($"{repo.Owner.Login}/{repo.Name}", StringComparer.OrdinalIgnoreCase))
                 {
@@ -119,6 +127,7 @@ public sealed class DesktopGitHubService
         }
 
         result.Diagnostics.RateLimit ??= GitHubRateLimitSnapshot.FromClient(client);
+        progress?.Report(new DiscoveryProgress("Finalizing catalog", result.Items.Count, result.Items.Count, $"{result.Items.Count} match(es)"));
         return result;
     }
 

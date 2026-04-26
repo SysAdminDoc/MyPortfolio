@@ -68,8 +68,20 @@
                             Command="{Binding RefreshCommand}" Style="{StaticResource AccentButton}" />
                 </Grid>
 
-                <ProgressBar Grid.Row="2" IsIndeterminate="True" Margin="0,10,0,0"
-                             Visibility="{Binding Busy, Converter={StaticResource BoolToVis}}" />
+                <Grid Grid.Row="2" Margin="0,10,0,0"
+                      Visibility="{Binding HasRefreshProgress, Converter={StaticResource BoolToVis}}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <ProgressBar Grid.Row="0"
+                                 Minimum="0"
+                                 Maximum="{Binding RefreshProgressMaximum}"
+                                 Value="{Binding RefreshProgressValue}"
+                                 IsIndeterminate="{Binding IsRefreshProgressIndeterminate}" />
+                    <TextBlock Grid.Row="1" Text="{Binding RefreshProgressText}"
+                               Style="{StaticResource MuteText}" TextWrapping="Wrap" Margin="0,4,0,0" />
+                </Grid>
 
                 <Border Grid.Row="3" BorderBrush="{DynamicResource Surface0Brush}"
                         BorderThickness="0,1,0,0" Padding="0,8,0,0" Margin="0,10,0,0"

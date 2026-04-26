@@ -20,6 +20,10 @@ public sealed class DiscoveryDiagnostics
     public int MatchCount => Owners.Sum(o => o.MatchesFound);
     public int ProbeFailureCount => Owners.Sum(o => o.ProbeFailures);
     public int CacheHitCount => Owners.Sum(o => o.CacheHits);
+    public int SkippedArchivedCount => Owners.Sum(o => o.SkippedArchived);
+    public int SkippedHiddenCount => Owners.Sum(o => o.SkippedHidden);
+    public int SkippedByTopicCount => Owners.Sum(o => o.SkippedByTopic);
+    public int SkippedCount => SkippedArchivedCount + SkippedHiddenCount + SkippedByTopicCount;
     public bool HasDetails => OwnerCount > 0 || RateLimit is not null;
     public bool HasWarnings => FailedOwners > 0 || ProbeFailureCount > 0 || RateLimit?.IsLow == true;
 
@@ -36,7 +40,7 @@ public sealed class DiscoveryDiagnostics
         {
             if (OwnerCount == 0) return string.Empty;
             if (OwnerCount == 1) return Owners[0].Summary;
-            return $"{SuccessfulOwners}/{OwnerCount} owners loaded / {RepositoryCount} repos scanned / {MatchCount} match(es){CacheSuffix(CacheHitCount)}";
+            return $"{SuccessfulOwners}/{OwnerCount} owners loaded / {RepositoryCount} repos scanned / {MatchCount} match(es){SkipSuffix(SkippedCount)}{CacheSuffix(CacheHitCount)}";
         }
     }
 
@@ -61,6 +65,9 @@ public sealed class DiscoveryDiagnostics
 
     private static string CacheSuffix(int cacheHits)
         => cacheHits > 0 ? $" / {cacheHits} cached" : string.Empty;
+
+    private static string SkipSuffix(int skipped)
+        => skipped > 0 ? $" / {skipped} skipped" : string.Empty;
 }
 
 public sealed class OwnerDiscoveryResult
@@ -81,7 +88,19 @@ public sealed class OwnerDiscoveryResult
 
     public string Summary => Failed
         ? $"{Owner}: failed"
-        : $"{Owner}: {MatchesFound} match(es) from {RepositoriesReturned} repo(s){(CacheHits > 0 ? $" / {CacheHits} cached" : string.Empty)}";
+        : $"{Owner}: {MatchesFound} match(es) from {RepositoriesReturned} repo(s){SkipSuffix}{(CacheHits > 0 ? $" / {CacheHits} cached" : string.Empty)}";
+
+    private string SkipSuffix
+    {
+        get
+        {
+            var parts = new List<string>();
+            if (SkippedArchived > 0) parts.Add($"{SkippedArchived} archived");
+            if (SkippedHidden > 0) parts.Add($"{SkippedHidden} hidden");
+            if (SkippedByTopic > 0) parts.Add($"{SkippedByTopic} topic-filtered");
+            return parts.Count == 0 ? string.Empty : $" / skipped {string.Join(", ", parts)}";
+        }
+    }
 
     public string WarningSummary
     {

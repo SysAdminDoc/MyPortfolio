@@ -24,6 +24,8 @@ public sealed class ChromeTabViewModel : ViewModelBase
     private string _searchText = string.Empty;
     private bool _showInstalledOnly;
     private DiscoveryDiagnostics _diagnostics = new();
+    private DiscoveryProgress? _refreshProgress;
+    private int _refreshProgressVersion;
 
     public ObservableCollection<ExtensionCardViewModel> Extensions { get; } = new();
     public ICollectionView ExtensionsView { get; }
@@ -69,6 +71,7 @@ public sealed class ChromeTabViewModel : ViewModelBase
                 OnPropertyChanged(nameof(ShowEmptyState));
                 OnPropertyChanged(nameof(RefreshButtonLabel));
                 OnPropertyChanged(nameof(CanLaunchBrowser));
+                OnPropertyChanged(nameof(HasRefreshProgress));
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -133,6 +136,11 @@ public sealed class ChromeTabViewModel : ViewModelBase
     public string DiscoveryWarningText => _diagnostics.WarningText;
     public bool HasRateLimitText => !string.IsNullOrWhiteSpace(RateLimitText);
     public string RateLimitText => _diagnostics.RateLimitText;
+    public bool HasRefreshProgress => Busy && _refreshProgress is not null;
+    public string RefreshProgressText => _refreshProgress?.Text ?? "Preparing refresh";
+    public int RefreshProgressValue => _refreshProgress?.Current ?? 0;
+    public int RefreshProgressMaximum => Math.Max(1, _refreshProgress?.Total ?? 1);
+    public bool IsRefreshProgressIndeterminate => _refreshProgress?.IsDeterminate != true;
 
     private bool FilterExtension(object obj)
     {
@@ -150,10 +158,15 @@ public sealed class ChromeTabViewModel : ViewModelBase
     public async Task RefreshAsync(CancellationToken ct)
     {
         Busy = true;
+        var refreshProgressVersion = ++_refreshProgressVersion;
         try
         {
             _log.Append("Chrome", "Discovering Chrome extensions...");
-            var result = await _github.DiscoverAsync(_settingsAccessor(), _log.AsProgress("Chrome"), ct);
+            var result = await _github.DiscoverAsync(
+                _settingsAccessor(),
+                _log.AsProgress("Chrome"),
+                ct,
+                new Progress<DiscoveryProgress>(progress => UpdateRefreshProgress(progress, refreshProgressVersion)));
             ct.ThrowIfCancellationRequested();
             ApplyDiagnostics(result.Diagnostics);
             Extensions.Clear();
@@ -177,7 +190,12 @@ public sealed class ChromeTabViewModel : ViewModelBase
             throw;
         }
         catch (Exception ex) { _log.Append("Chrome", $"! Refresh failed: {ex.Message}"); }
-        finally { Busy = false; }
+        finally
+        {
+            _refreshProgressVersion++;
+            Busy = false;
+            ClearRefreshProgress();
+        }
     }
 
     private void RefreshAfterChange()
@@ -270,6 +288,28 @@ public sealed class ChromeTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(DiscoveryWarningText));
         OnPropertyChanged(nameof(HasRateLimitText));
         OnPropertyChanged(nameof(RateLimitText));
+    }
+
+    private void UpdateRefreshProgress(DiscoveryProgress progress, int version)
+    {
+        if (version != _refreshProgressVersion || !Busy) return;
+        _refreshProgress = progress;
+        RefreshProgressProperties();
+    }
+
+    private void ClearRefreshProgress()
+    {
+        _refreshProgress = null;
+        RefreshProgressProperties();
+    }
+
+    private void RefreshProgressProperties()
+    {
+        OnPropertyChanged(nameof(HasRefreshProgress));
+        OnPropertyChanged(nameof(RefreshProgressText));
+        OnPropertyChanged(nameof(RefreshProgressValue));
+        OnPropertyChanged(nameof(RefreshProgressMaximum));
+        OnPropertyChanged(nameof(IsRefreshProgressIndeterminate));
     }
 
     private void RefreshMetrics()

@@ -48,8 +48,13 @@ MyPortfolio uses this file as the public implementation checklist. Local scratch
   - Add clearer retry/backoff guidance after primary or secondary GitHub rate-limit stops.
   - Added a staged refresh-all sequence with a cancel action, cancellation-aware tab refreshes, and clearer rate-limit retry guidance in diagnostics.
 
-## Next
-
-- [ ] v0.11.0 — Refresh progress visibility
+- [x] v0.11.0 — Refresh progress visibility
   - Show per-tab refresh stage/count progress while discovery is running.
   - Surface skipped archived, hidden, and topic-filtered repo counts without expanding the activity log.
+  - Added structured discovery progress reporting, determinate per-tab progress text, and skip summaries in the visible diagnostics row.
+
+## Next
+
+- [ ] v0.12.0 — Discovery detail drilldown
+  - Add an expandable per-owner diagnostics view for skipped, cached, failed, and matched repository counts.
+  - Keep the compact header summary readable when many owners are configured.
