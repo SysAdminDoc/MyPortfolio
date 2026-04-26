@@ -30,7 +30,7 @@ MyPortfolio replaces three separate stores — [LocalDesktopStore][lds], [LocalC
 | --- | --- | --- |
 | **Desktop apps** | `.msi`, `.exe` (Inno / NSIS / generic), `.zip` portable | Install, run, and uninstall — silent installers via `msiexec /qb`, `/SILENT /NORESTART`, `/S`, or extract-and-shortcut for portable ZIPs. SHA-256 sidecar verification. |
 | **Chrome extensions** | `.zip` or `.crx` | Download, extract (zip-slip guarded, CRX2/CRX3 header strip), then launch Chrome / Brave / Edge / Vivaldi / Opera with `--load-extension="path1,path2,..."`. |
-| **Android APKs** | `.apk` | Download to `%USERPROFILE%\Downloads\MyPortfolio\Android\<owner>\<repo>\<version>\` with hash verification. Reveal in Explorer when you're ready to sideload. |
+| **Android APKs** | `.apk` | Download to `%USERPROFILE%\Downloads\MyPortfolio\Android\<owner>\<repo>\<version>\` with hash verification. Read package name, version name, and version code from the APK manifest when available. Reveal in Explorer when you're ready to sideload. |
 
 One settings drawer drives all three tabs — same GitHub user, same PAT, optional extra collaborator owners, shared Mocha / Latte appearance, accent color, separate topic filter / verification toggles per tab.
 
@@ -79,7 +79,7 @@ dotnet build src/MyPortfolio/MyPortfolio.csproj -c Release
 8. Click **Save and refresh all** — every tab populates simultaneously.
 9. Switch between tabs and click **Install** / **Download APK** / **Launch with extensions** as you like.
 
-Each tab shows its last successful refresh time beside its catalog summary, so stale discovery state is visible before you install or download anything.
+Each tab shows its last successful refresh time beside its catalog summary, so stale discovery state is visible before you install or download anything. Downloaded Android cards also show the APK package name plus manifest version name and code when the manifest can be decoded.
 
 Every action streams into the activity log at the bottom of the window. Nothing fails silently; everything is logged in-app and to `%LOCALAPPDATA%\MyPortfolio\logs\`.
 
@@ -110,8 +110,9 @@ The Android download folder lives under your Downloads on purpose — it's where
 
 ## Architecture
 
-C# WPF, .NET 9, single-project MVVM. No third-party MVVM toolkit. Two NuGet deps:
+C# WPF, .NET 9, single-project MVVM. No third-party MVVM toolkit. Three NuGet deps:
 
+- `AndroidXml 1.1.24` — binary Android manifest decoding for APK metadata
 - `Octokit 13.0.1` — GitHub API
 - `Microsoft.Win32.Registry 5.0.0` — Windows uninstall key reads (Desktop tab only)
 

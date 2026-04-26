@@ -100,7 +100,10 @@ public sealed class AndroidTabViewModel : ViewModelBase
         var q = SearchText.Trim();
         return vm.Title.Contains(q, StringComparison.OrdinalIgnoreCase)
             || vm.Description.Contains(q, StringComparison.OrdinalIgnoreCase)
-            || vm.Repo.Contains(q, StringComparison.OrdinalIgnoreCase);
+            || vm.Repo.Contains(q, StringComparison.OrdinalIgnoreCase)
+            || vm.PackageName.Contains(q, StringComparison.OrdinalIgnoreCase)
+            || vm.ApkVersionCode.Contains(q, StringComparison.OrdinalIgnoreCase)
+            || vm.ApkVersionName.Contains(q, StringComparison.OrdinalIgnoreCase);
     }
 
     public async Task RefreshAsync()

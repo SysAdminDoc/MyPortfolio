@@ -33,6 +33,18 @@ public sealed class ApkDownloadService
 
     public void Reload() => _manifest = _settings.LoadAndroidManifest();
 
+    public DownloadedApk? EnsureManifestMetadata(DownloadedApk? apk, IProgress<string>? log = null)
+    {
+        if (apk is null || apk.HasManifestMetadata || !File.Exists(apk.FilePath)) return apk;
+
+        var metadata = ReadManifestMetadata(apk.FilePath, log);
+        if (metadata is null) return apk;
+
+        ApplyMetadata(apk, metadata);
+        _settings.SaveAndroidManifest(_manifest);
+        return apk;
+    }
+
     public async Task<DownloadedApk> DownloadAsync(AndroidAppInfo info, AppSettings cfg, IProgress<string>? log, IProgress<long>? bytes, CancellationToken ct = default)
     {
         if (string.IsNullOrEmpty(info.AssetUrl) || string.IsNullOrEmpty(info.AssetName))
@@ -78,6 +90,8 @@ public sealed class ApkDownloadService
             catch { /* hash on disk is a nicety — don't fail the row if it errors */ }
         }
 
+        var metadata = ReadManifestMetadata(destination, log);
+
         var record = new DownloadedApk
         {
             RepoOwner = info.RepoOwner,
@@ -89,6 +103,7 @@ public sealed class ApkDownloadService
             Sha256 = sha,
             DownloadedAt = DateTimeOffset.UtcNow
         };
+        if (metadata is not null) ApplyMetadata(record, metadata);
 
         // Replace any prior row for this repo, then prune older versions on disk.
         _manifest.Apks.RemoveAll(d =>
@@ -160,5 +175,30 @@ public sealed class ApkDownloadService
             }
             catch (Exception ex) { log?.Report($"! Could not prune {dir}: {ex.Message}"); }
         }
+    }
+
+    private static ApkManifestMetadata? ReadManifestMetadata(string apkPath, IProgress<string>? log)
+    {
+        var metadata = ApkManifestReader.TryRead(apkPath, out var error);
+        if (metadata is not null)
+        {
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(metadata.PackageName)) parts.Add(metadata.PackageName!);
+            if (!string.IsNullOrWhiteSpace(metadata.VersionName)) parts.Add($"version {metadata.VersionName}");
+            if (!string.IsNullOrWhiteSpace(metadata.VersionCode)) parts.Add($"code {metadata.VersionCode}");
+            log?.Report($"Read APK manifest: {string.Join(" / ", parts)}");
+            return metadata;
+        }
+
+        if (!string.IsNullOrWhiteSpace(error))
+            log?.Report($"  ~ APK manifest metadata unavailable: {error}");
+        return null;
+    }
+
+    private static void ApplyMetadata(DownloadedApk apk, ApkManifestMetadata metadata)
+    {
+        apk.PackageName = metadata.PackageName;
+        apk.VersionCode = metadata.VersionCode;
+        apk.VersionName = metadata.VersionName;
     }
 }

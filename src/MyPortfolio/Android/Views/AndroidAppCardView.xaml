@@ -7,7 +7,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
-             Width="378" Height="306">
+             Width="378" Height="336">
     <UserControl.Resources>
         <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
         <conv:NullToVisibilityConverter x:Key="NullToVis" />
@@ -16,6 +16,7 @@
     <Border Style="{StaticResource CardBorder}">
         <Grid>
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -94,10 +95,33 @@
                            TextTrimming="CharacterEllipsis" />
             </Grid>
 
-            <TextBlock Grid.Row="2" Text="{Binding Description}" Style="{StaticResource SubtleText}"
+            <Border Grid.Row="2" CornerRadius="8" Padding="10,7" Margin="0,0,0,10"
+                    Background="{DynamicResource Surface0Brush}"
+                    BorderBrush="{DynamicResource Surface1Brush}"
+                    BorderThickness="1"
+                    Visibility="{Binding IsDownloaded, Converter={StaticResource BoolToVis}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="{Binding PackageNameText}"
+                               Style="{StaticResource MuteText}" FontFamily="Cascadia Mono, Consolas"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock Grid.Column="1" Text="{Binding ApkVersionNameText}"
+                               Style="{StaticResource MuteText}" Margin="10,0,0,0"
+                               MaxWidth="104" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Grid.Column="2" Text="{Binding ApkVersionCodeText}"
+                               Style="{StaticResource MuteText}" Margin="10,0,0,0"
+                               MaxWidth="92" TextTrimming="CharacterEllipsis" />
+                </Grid>
+            </Border>
+
+            <TextBlock Grid.Row="3" Text="{Binding Description}" Style="{StaticResource SubtleText}"
                        TextWrapping="Wrap" MaxHeight="58" TextTrimming="CharacterEllipsis" />
 
-            <Grid Grid.Row="3" Margin="0,12,0,8">
+            <Grid Grid.Row="4" Margin="0,12,0,8">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
@@ -114,16 +138,16 @@
                              Margin="0,8,0,0" Visibility="{Binding Busy, Converter={StaticResource BoolToVis}}" />
             </Grid>
 
-            <TextBlock Grid.Row="4" Text="{Binding BusyMessage}"
+            <TextBlock Grid.Row="5" Text="{Binding BusyMessage}"
                        Foreground="{DynamicResource SapphireBrush}" FontSize="11" FontWeight="SemiBold"
                        Margin="0,0,0,6" Visibility="{Binding Busy, Converter={StaticResource BoolToVis}}" />
 
-            <TextBlock Grid.Row="5" Text="{Binding ErrorMessage}"
+            <TextBlock Grid.Row="6" Text="{Binding ErrorMessage}"
                        Foreground="{DynamicResource RedBrush}" FontSize="11" FontWeight="SemiBold"
                        TextWrapping="Wrap" Margin="0,0,0,8"
                        Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}" />
 
-            <Grid Grid.Row="6">
+            <Grid Grid.Row="7">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />

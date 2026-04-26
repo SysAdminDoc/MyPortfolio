@@ -23,8 +23,13 @@ MyPortfolio uses this file as the public implementation checklist. Local scratch
   - Add a small accent picker that reuses the existing token system.
   - Added runtime Mocha / Latte token switching plus Mauve, Sapphire, Teal, Green, Peach, and Red accent choices.
 
-## Next
-
-- [ ] v0.6.0 — APK metadata enrichment
+- [x] v0.6.0 — APK metadata enrichment
   - Read `AndroidManifest.xml` from APK ZIPs where feasible.
   - Surface package name, version code, and version name in Android cards.
+  - Added binary/plain manifest decoding for downloaded APKs, persisted metadata in the Android downloads manifest, and included metadata in card display and search.
+
+## Next
+
+- [ ] v0.7.0 — Local artifact details
+  - Add a consistent details surface for installed/downloaded artifacts across tabs.
+  - Include file path, SHA-256, asset size, release date, and copy/open actions without crowding cards.

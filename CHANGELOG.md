@@ -9,6 +9,8 @@ All notable changes to MyPortfolio are documented here. Format follows [Keep a C
 - Per-tab last-refresh timestamps for Desktop, Chrome, and Android discovery surfaces.
 - Extra-owner chip editor with add, remove, clear, Enter-to-add, and pasted-list import support.
 - Catppuccin Latte theme and accent picker backed by shared runtime theme tokens.
+- APK manifest metadata reader that stores and displays package name, version name, and version code for downloaded Android builds.
+- Confirmation prompt before removing a locally downloaded APK.
 - Tracked public roadmap file for completed and upcoming implementation passes.
 
 ## v0.1.0 — 2026-04-25

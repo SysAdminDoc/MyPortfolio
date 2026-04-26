@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using MyPortfolio.Android.Models;
@@ -47,6 +48,7 @@ public sealed class AndroidAppCardViewModel : ViewModelBase
         RemoveCommand = new RelayCommand(_ => Remove(), _ => IsDownloaded && !Busy);
         RevealCommand = new RelayCommand(_ => Reveal(), _ => IsDownloaded && !Busy);
         OpenRepoCommand = new RelayCommand(_ => OpenUrl(Info.RepoUrl));
+        _downloaded = _downloader.EnsureManifestMetadata(_downloaded);
         _ = LoadIconAsync();
     }
 
@@ -79,6 +81,12 @@ public sealed class AndroidAppCardViewModel : ViewModelBase
         : !File.Exists(_downloaded.FilePath)
             ? $"Local file missing — re-download to refresh"
             : $"Local v{_downloaded.Version} • {Format.Bytes(_downloaded.SizeBytes)}";
+    public string PackageName => _downloaded?.PackageName ?? string.Empty;
+    public string ApkVersionCode => _downloaded?.VersionCode ?? string.Empty;
+    public string ApkVersionName => _downloaded?.VersionName ?? string.Empty;
+    public string PackageNameText => string.IsNullOrWhiteSpace(PackageName) ? "Package unavailable" : PackageName;
+    public string ApkVersionCodeText => string.IsNullOrWhiteSpace(ApkVersionCode) ? "Code unavailable" : $"Code {ApkVersionCode}";
+    public string ApkVersionNameText => string.IsNullOrWhiteSpace(ApkVersionName) ? "Name unavailable" : $"Name {ApkVersionName}";
 
     public BitmapImage? Icon { get => _icon; private set => SetField(ref _icon, value); }
 
@@ -143,11 +151,26 @@ public sealed class AndroidAppCardViewModel : ViewModelBase
     private void Remove()
     {
         if (_downloaded == null) return;
-        var logProgress = new Progress<string>(_log);
-        _downloader.Remove(Info.RepoOwner, Info.RepoName, logProgress);
-        _downloaded = null;
-        RaiseAllChanged();
-        _refreshParent();
+        var confirm = MessageBox.Show(
+            $"Remove the local APK for {Title}?\n\nThe GitHub repository and release assets are not changed.",
+            "Remove APK", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (confirm != MessageBoxResult.Yes) return;
+
+        Busy = true;
+        try
+        {
+            BusyMessage = "Removing local APK...";
+            var logProgress = new Progress<string>(_log);
+            _downloader.Remove(Info.RepoOwner, Info.RepoName, logProgress);
+            _downloaded = null;
+            RaiseAllChanged();
+            _refreshParent();
+        }
+        finally
+        {
+            Busy = false;
+            BusyMessage = null;
+        }
     }
 
     private void Reveal()
@@ -199,6 +222,12 @@ public sealed class AndroidAppCardViewModel : ViewModelBase
         OnPropertyChanged(nameof(DownloadButtonLabel));
         OnPropertyChanged(nameof(StatusBadge));
         OnPropertyChanged(nameof(DownloadedDetail));
+        OnPropertyChanged(nameof(PackageName));
+        OnPropertyChanged(nameof(ApkVersionCode));
+        OnPropertyChanged(nameof(ApkVersionName));
+        OnPropertyChanged(nameof(PackageNameText));
+        OnPropertyChanged(nameof(ApkVersionCodeText));
+        OnPropertyChanged(nameof(ApkVersionNameText));
         OnPropertyChanged(nameof(HasError));
     }
 }
