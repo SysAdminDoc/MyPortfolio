@@ -19,6 +19,7 @@ public sealed class AndroidTabViewModel : ViewModelBase
     private bool _busy;
     private string _searchText = string.Empty;
     private bool _showDownloadedOnly;
+    private DiscoveryDiagnostics _diagnostics = new();
 
     public ObservableCollection<AndroidAppCardViewModel> Apps { get; } = new();
     public ICollectionView AppsView { get; }
@@ -91,6 +92,12 @@ public sealed class AndroidTabViewModel : ViewModelBase
         : !string.IsNullOrWhiteSpace(SearchText) ? "Try a different app name, repository, or description keyword."
         : "Adjust the filters or refresh the catalog.";
     public string DownloadFolder => _settingsService.AndroidDownloadRoot(_settingsAccessor());
+    public bool HasDiscoveryDiagnostics => _diagnostics.HasDetails;
+    public string DiscoverySummary => _diagnostics.Summary;
+    public bool HasDiscoveryWarning => _diagnostics.HasWarnings;
+    public string DiscoveryWarningText => _diagnostics.WarningText;
+    public bool HasRateLimitText => !string.IsNullOrWhiteSpace(RateLimitText);
+    public string RateLimitText => _diagnostics.RateLimitText;
 
     private bool FilterApp(object obj)
     {
@@ -112,9 +119,10 @@ public sealed class AndroidTabViewModel : ViewModelBase
         try
         {
             _log.Append("Android", "Discovering Android APK releases...");
-            var infos = await _github.DiscoverAsync(_settingsAccessor(), _log.AsProgress("Android"));
+            var result = await _github.DiscoverAsync(_settingsAccessor(), _log.AsProgress("Android"));
+            ApplyDiagnostics(result.Diagnostics);
             Apps.Clear();
-            foreach (var info in infos)
+            foreach (var info in result.Items)
             {
                 Apps.Add(new AndroidAppCardViewModel(
                     info, _downloader, _http, _settingsService, _settingsAccessor,
@@ -125,6 +133,7 @@ public sealed class AndroidTabViewModel : ViewModelBase
             RefreshMetrics();
             MarkRefreshed();
             _log.Append("Android", $"Found {Apps.Count} Android app(s) — {DownloadedCount} downloaded.");
+            if (_diagnostics.HasWarnings) _log.Append("Android", $"! {_diagnostics.WarningText}");
         }
         catch (Exception ex) { _log.Append("Android", $"! Refresh failed: {ex.Message}"); }
         finally { Busy = false; }
@@ -162,6 +171,23 @@ public sealed class AndroidTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(EmptyStateTitle));
         OnPropertyChanged(nameof(EmptyStateMessage));
         OnPropertyChanged(nameof(DownloadFolder));
+        RefreshDiagnostics();
+    }
+
+    private void ApplyDiagnostics(DiscoveryDiagnostics diagnostics)
+    {
+        _diagnostics = diagnostics;
+        RefreshDiagnostics();
+    }
+
+    private void RefreshDiagnostics()
+    {
+        OnPropertyChanged(nameof(HasDiscoveryDiagnostics));
+        OnPropertyChanged(nameof(DiscoverySummary));
+        OnPropertyChanged(nameof(HasDiscoveryWarning));
+        OnPropertyChanged(nameof(DiscoveryWarningText));
+        OnPropertyChanged(nameof(HasRateLimitText));
+        OnPropertyChanged(nameof(RateLimitText));
     }
 
     private void MarkRefreshed()

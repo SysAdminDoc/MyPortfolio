@@ -12,6 +12,7 @@ All notable changes to MyPortfolio are documented here. Format follows [Keep a C
 - APK manifest metadata reader that stores and displays package name, version name, and version code for downloaded Android builds.
 - Confirmation prompt before removing a locally downloaded APK.
 - Collapsible local artifact details on Desktop, Chrome, and Android cards with file path, release asset, SHA-256, release date, copy, and open actions.
+- Per-tab discovery diagnostics that show owner scan summaries, partial-failure warnings, repo probe issues, and GitHub API quota after refresh.
 - Tracked public roadmap file for completed and upcoming implementation passes.
 
 ## v0.1.0 — 2026-04-25

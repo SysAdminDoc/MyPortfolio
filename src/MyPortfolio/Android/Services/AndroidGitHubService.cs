@@ -15,37 +15,102 @@ public sealed class AndroidGitHubService
     /// We never install on Windows — the Android tab is strictly a "download .apk to PC"
     /// surface so the user can pull builds across to a device themselves.
     /// </summary>
-    public async Task<List<AndroidAppInfo>> DiscoverAsync(AppSettings cfg, IProgress<string>? log = null, CancellationToken ct = default)
+    public async Task<CatalogDiscoveryResult<AndroidAppInfo>> DiscoverAsync(AppSettings cfg, IProgress<string>? log = null, CancellationToken ct = default)
     {
         var client = _factory.Get(cfg);
         var owners = OwnerList(cfg);
-        var found = new List<AndroidAppInfo>();
+        var result = new CatalogDiscoveryResult<AndroidAppInfo>();
+        var stopDiscovery = false;
+
         foreach (var owner in owners)
         {
+            var ownerResult = result.Diagnostics.AddOwner(owner);
             log?.Report($"Listing repos for {owner}...");
             IReadOnlyList<Repository> repos;
-            try { repos = await client.Repository.GetAllForUser(owner); }
-            catch (Exception ex) { log?.Report($"  ! {owner}: {ex.Message}"); continue; }
+            try
+            {
+                repos = await client.Repository.GetAllForUser(owner);
+                result.Diagnostics.RateLimit = GitHubRateLimitSnapshot.FromClient(client) ?? result.Diagnostics.RateLimit;
+            }
+            catch (RateLimitExceededException ex)
+            {
+                result.Diagnostics.RateLimit = GitHubRateLimitSnapshot.FromPrimaryLimit(ex);
+                ownerResult.Fail(GitHubDiscoveryDiagnostics.RateLimitMessage(ex));
+                log?.Report($"  ! {owner}: {ownerResult.ErrorMessage}");
+                break;
+            }
+            catch (SecondaryRateLimitExceededException)
+            {
+                ownerResult.Fail(GitHubDiscoveryDiagnostics.SecondaryRateLimitMessage());
+                log?.Report($"  ! {owner}: {ownerResult.ErrorMessage}");
+                break;
+            }
+            catch (Exception ex)
+            {
+                ownerResult.Fail(ex.Message);
+                log?.Report($"  ! {owner}: {ex.Message}");
+                continue;
+            }
 
+            ownerResult.RepositoriesReturned = repos.Count;
             log?.Report($"  {repos.Count} repos returned");
             foreach (var repo in repos)
             {
                 ct.ThrowIfCancellationRequested();
-                if (repo.Archived) continue;
-                if (cfg.HiddenRepos.Contains($"{repo.Owner.Login}/{repo.Name}", StringComparer.OrdinalIgnoreCase)) continue;
-
-                if (cfg.AndroidUseTopicFilter && !string.IsNullOrWhiteSpace(cfg.AndroidTopicFilter))
+                if (repo.Archived) { ownerResult.SkippedArchived++; continue; }
+                if (cfg.HiddenRepos.Contains($"{repo.Owner.Login}/{repo.Name}", StringComparer.OrdinalIgnoreCase))
                 {
-                    var topics = await SafeGetTopics(client, repo);
-                    if (topics is null || !topics.Any(t => t.Equals(cfg.AndroidTopicFilter, StringComparison.OrdinalIgnoreCase)))
-                        continue;
+                    ownerResult.SkippedHidden++;
+                    continue;
                 }
 
-                var info = await ProbeRepoAsync(client, repo, log, ct);
-                if (info != null) found.Add(info);
+                try
+                {
+                    if (cfg.AndroidUseTopicFilter && !string.IsNullOrWhiteSpace(cfg.AndroidTopicFilter))
+                    {
+                        var topics = await SafeGetTopics(client, repo);
+                        if (topics is null || !topics.Any(t => t.Equals(cfg.AndroidTopicFilter, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            ownerResult.SkippedByTopic++;
+                            continue;
+                        }
+                    }
+
+                    var info = await ProbeRepoAsync(client, repo, log, ct);
+                    result.Diagnostics.RateLimit = GitHubRateLimitSnapshot.FromClient(client) ?? result.Diagnostics.RateLimit;
+                    if (info != null)
+                    {
+                        result.Items.Add(info);
+                        ownerResult.MatchesFound++;
+                    }
+                }
+                catch (RateLimitExceededException ex)
+                {
+                    result.Diagnostics.RateLimit = GitHubRateLimitSnapshot.FromPrimaryLimit(ex);
+                    ownerResult.Fail(GitHubDiscoveryDiagnostics.RateLimitMessage(ex));
+                    log?.Report($"  ! {owner}: {ownerResult.ErrorMessage}");
+                    stopDiscovery = true;
+                    break;
+                }
+                catch (SecondaryRateLimitExceededException)
+                {
+                    ownerResult.Fail(GitHubDiscoveryDiagnostics.SecondaryRateLimitMessage());
+                    log?.Report($"  ! {owner}: {ownerResult.ErrorMessage}");
+                    stopDiscovery = true;
+                    break;
+                }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
+                catch (Exception ex)
+                {
+                    ownerResult.ProbeFailures++;
+                    log?.Report($"  ! probe {repo.Name}: {ex.Message}");
+                }
             }
+            if (stopDiscovery) break;
         }
-        return found;
+
+        result.Diagnostics.RateLimit ??= GitHubRateLimitSnapshot.FromClient(client);
+        return result;
     }
 
     private static List<string> OwnerList(AppSettings cfg)
@@ -63,6 +128,8 @@ public sealed class AndroidGitHubService
             var topics = await client.Repository.GetAllTopics(repo.Id);
             return topics?.Names?.ToList();
         }
+        catch (RateLimitExceededException) { throw; }
+        catch (SecondaryRateLimitExceededException) { throw; }
         catch { return null; }
     }
 
@@ -71,7 +138,9 @@ public sealed class AndroidGitHubService
         Release? release = null;
         try { release = await client.Repository.Release.GetLatest(repo.Owner.Login, repo.Name); }
         catch (NotFoundException) { return null; }
-        catch (Exception ex) { log?.Report($"  ! release {repo.Name}: {ex.Message}"); return null; }
+        catch (RateLimitExceededException) { throw; }
+        catch (SecondaryRateLimitExceededException) { throw; }
+        catch (Exception) { throw; }
 
         if (release == null || release.Assets.Count == 0) return null;
 

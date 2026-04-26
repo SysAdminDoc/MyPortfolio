@@ -19,6 +19,7 @@ public sealed class DesktopTabViewModel : ViewModelBase
     private bool _busy;
     private string _searchText = string.Empty;
     private bool _showInstalledOnly;
+    private DiscoveryDiagnostics _diagnostics = new();
 
     public ObservableCollection<AppCardViewModel> Apps { get; } = new();
     public ICollectionView AppsView { get; }
@@ -90,6 +91,12 @@ public sealed class DesktopTabViewModel : ViewModelBase
         : ShowInstalledOnly ? "Clear the installed-only filter or install an app from the full catalog."
         : !string.IsNullOrWhiteSpace(SearchText) ? "Try a different app name, repository, or description keyword."
         : "Adjust the filters or refresh the catalog.";
+    public bool HasDiscoveryDiagnostics => _diagnostics.HasDetails;
+    public string DiscoverySummary => _diagnostics.Summary;
+    public bool HasDiscoveryWarning => _diagnostics.HasWarnings;
+    public string DiscoveryWarningText => _diagnostics.WarningText;
+    public bool HasRateLimitText => !string.IsNullOrWhiteSpace(RateLimitText);
+    public string RateLimitText => _diagnostics.RateLimitText;
 
     private bool FilterApp(object obj)
     {
@@ -108,9 +115,10 @@ public sealed class DesktopTabViewModel : ViewModelBase
         try
         {
             _log.Append("Desktop", "Discovering desktop apps...");
-            var infos = await _github.DiscoverAsync(_settingsAccessor(), _log.AsProgress("Desktop"));
+            var result = await _github.DiscoverAsync(_settingsAccessor(), _log.AsProgress("Desktop"));
+            ApplyDiagnostics(result.Diagnostics);
             Apps.Clear();
-            foreach (var info in infos)
+            foreach (var info in result.Items)
             {
                 Apps.Add(new AppCardViewModel(
                     info, _installer, _http, _settingsService, _settingsAccessor,
@@ -121,6 +129,7 @@ public sealed class DesktopTabViewModel : ViewModelBase
             RefreshMetrics();
             MarkRefreshed();
             _log.Append("Desktop", $"Found {Apps.Count} app(s) — {InstalledCount} installed.");
+            if (_diagnostics.HasWarnings) _log.Append("Desktop", $"! {_diagnostics.WarningText}");
         }
         catch (Exception ex)
         {
@@ -160,6 +169,23 @@ public sealed class DesktopTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowEmptyState));
         OnPropertyChanged(nameof(EmptyStateTitle));
         OnPropertyChanged(nameof(EmptyStateMessage));
+        RefreshDiagnostics();
+    }
+
+    private void ApplyDiagnostics(DiscoveryDiagnostics diagnostics)
+    {
+        _diagnostics = diagnostics;
+        RefreshDiagnostics();
+    }
+
+    private void RefreshDiagnostics()
+    {
+        OnPropertyChanged(nameof(HasDiscoveryDiagnostics));
+        OnPropertyChanged(nameof(DiscoverySummary));
+        OnPropertyChanged(nameof(HasDiscoveryWarning));
+        OnPropertyChanged(nameof(DiscoveryWarningText));
+        OnPropertyChanged(nameof(HasRateLimitText));
+        OnPropertyChanged(nameof(RateLimitText));
     }
 
     private void MarkRefreshed()

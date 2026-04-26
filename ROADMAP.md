@@ -33,8 +33,13 @@ MyPortfolio uses this file as the public implementation checklist. Local scratch
   - Include file path, SHA-256, asset size, release date, and copy/open actions without crowding cards.
   - Added collapsible card details for Desktop, Chrome, and Android plus persisted source asset metadata for newly installed/downloaded artifacts.
 
-## Next
-
-- [ ] v0.8.0 — Catalog resilience and diagnostics
+- [x] v0.8.0 — Catalog resilience and diagnostics
   - Surface GitHub rate-limit and partial-failure state without burying it in the activity log.
   - Add clearer per-owner discovery summaries when one configured owner fails and others still load.
+  - Added visible per-tab discovery diagnostics with owner summaries, partial-failure warnings, probe issue counts, and current GitHub API quota.
+
+## Next
+
+- [ ] v0.9.0 — Discovery performance controls
+  - Add a per-tab owner/repo concurrency cap or staged refresh mode.
+  - Cache release probes briefly to avoid repeated refreshes burning GitHub API quota.

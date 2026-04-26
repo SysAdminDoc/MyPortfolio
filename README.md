@@ -79,7 +79,7 @@ dotnet build src/MyPortfolio/MyPortfolio.csproj -c Release
 8. Click **Save and refresh all** — every tab populates simultaneously.
 9. Switch between tabs and click **Install** / **Download APK** / **Launch with extensions** as you like.
 
-Each tab shows its last successful refresh time beside its catalog summary, so stale discovery state is visible before you install or download anything. Downloaded Android cards also show the APK package name plus manifest version name and code when the manifest can be decoded. The **Details** action on each card expands local artifact metadata, including path, release asset, SHA-256, release date, and copy/open shortcuts.
+Each tab shows its last successful refresh time beside its catalog summary, so stale discovery state is visible before you install or download anything. After refresh, each catalog also shows a compact discovery summary with per-owner results, partial-failure warnings, repo probe issues, and current GitHub API quota. Downloaded Android cards also show the APK package name plus manifest version name and code when the manifest can be decoded. The **Details** action on each card expands local artifact metadata, including path, release asset, SHA-256, release date, and copy/open shortcuts.
 
 Every action streams into the activity log at the bottom of the window. Nothing fails silently; everything is logged in-app and to `%LOCALAPPDATA%\MyPortfolio\logs\`.
 
@@ -123,7 +123,8 @@ src/MyPortfolio/
 ├── MainViewModel.cs      # owns SettingsService, HttpDownloader, LogSink, three tab VMs
 │
 ├── Common/               # ViewModelBase, RelayCommand, AppSettings, SettingsService,
-│                         # GitHubClientFactory, HttpDownloader, HashVerifier, LogSink, Format
+│                         # GitHubClientFactory, DiscoveryDiagnostics, HttpDownloader,
+│                         # HashVerifier, LogSink, Format
 ├── Converters/           # BoolToVis, NullToVis, EmptyStringToVis
 ├── Themes/               # Catppuccin token dictionary + runtime Mocha / Latte theme service
 │

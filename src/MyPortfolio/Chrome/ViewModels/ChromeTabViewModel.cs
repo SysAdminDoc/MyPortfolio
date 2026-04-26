@@ -23,6 +23,7 @@ public sealed class ChromeTabViewModel : ViewModelBase
     private BrowserInfo? _selectedBrowser;
     private string _searchText = string.Empty;
     private bool _showInstalledOnly;
+    private DiscoveryDiagnostics _diagnostics = new();
 
     public ObservableCollection<ExtensionCardViewModel> Extensions { get; } = new();
     public ICollectionView ExtensionsView { get; }
@@ -126,6 +127,12 @@ public sealed class ChromeTabViewModel : ViewModelBase
         : ShowInstalledOnly ? "Clear the installed-only filter or install an extension from the full catalog."
         : !string.IsNullOrWhiteSpace(SearchText) ? "Try a different extension name, repository, or description keyword."
         : "Adjust the filters or refresh the catalog.";
+    public bool HasDiscoveryDiagnostics => _diagnostics.HasDetails;
+    public string DiscoverySummary => _diagnostics.Summary;
+    public bool HasDiscoveryWarning => _diagnostics.HasWarnings;
+    public string DiscoveryWarningText => _diagnostics.WarningText;
+    public bool HasRateLimitText => !string.IsNullOrWhiteSpace(RateLimitText);
+    public string RateLimitText => _diagnostics.RateLimitText;
 
     private bool FilterExtension(object obj)
     {
@@ -144,9 +151,10 @@ public sealed class ChromeTabViewModel : ViewModelBase
         try
         {
             _log.Append("Chrome", "Discovering Chrome extensions...");
-            var infos = await _github.DiscoverAsync(_settingsAccessor(), _log.AsProgress("Chrome"));
+            var result = await _github.DiscoverAsync(_settingsAccessor(), _log.AsProgress("Chrome"));
+            ApplyDiagnostics(result.Diagnostics);
             Extensions.Clear();
-            foreach (var info in infos)
+            foreach (var info in result.Items)
             {
                 Extensions.Add(new ExtensionCardViewModel(
                     info, _extensions, _http, _settingsService,
@@ -158,6 +166,7 @@ public sealed class ChromeTabViewModel : ViewModelBase
             RefreshMetrics();
             MarkRefreshed();
             _log.Append("Chrome", $"Found {Extensions.Count} extension(s) — {InstalledCount} installed.");
+            if (_diagnostics.HasWarnings) _log.Append("Chrome", $"! {_diagnostics.WarningText}");
         }
         catch (Exception ex) { _log.Append("Chrome", $"! Refresh failed: {ex.Message}"); }
         finally { Busy = false; }
@@ -236,6 +245,23 @@ public sealed class ChromeTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowEmptyState));
         OnPropertyChanged(nameof(EmptyStateTitle));
         OnPropertyChanged(nameof(EmptyStateMessage));
+        RefreshDiagnostics();
+    }
+
+    private void ApplyDiagnostics(DiscoveryDiagnostics diagnostics)
+    {
+        _diagnostics = diagnostics;
+        RefreshDiagnostics();
+    }
+
+    private void RefreshDiagnostics()
+    {
+        OnPropertyChanged(nameof(HasDiscoveryDiagnostics));
+        OnPropertyChanged(nameof(DiscoverySummary));
+        OnPropertyChanged(nameof(HasDiscoveryWarning));
+        OnPropertyChanged(nameof(DiscoveryWarningText));
+        OnPropertyChanged(nameof(HasRateLimitText));
+        OnPropertyChanged(nameof(RateLimitText));
     }
 
     private void RefreshMetrics()
