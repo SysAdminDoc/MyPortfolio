@@ -101,7 +101,8 @@ public sealed class ApkDownloadService
             FilePath = destination,
             SizeBytes = info.AssetSizeBytes,
             Sha256 = sha,
-            DownloadedAt = DateTimeOffset.UtcNow
+            DownloadedAt = DateTimeOffset.UtcNow,
+            PublishedAt = info.PublishedAt
         };
         if (metadata is not null) ApplyMetadata(record, metadata);
 

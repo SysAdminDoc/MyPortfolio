@@ -23,6 +23,7 @@ public sealed class AndroidAppCardViewModel : ViewModelBase
     private string? _errorMessage;
     private DownloadedApk? _downloaded;
     private BitmapImage? _icon;
+    private bool _detailsExpanded;
 
     public AndroidAppInfo Info { get; }
 
@@ -48,6 +49,10 @@ public sealed class AndroidAppCardViewModel : ViewModelBase
         RemoveCommand = new RelayCommand(_ => Remove(), _ => IsDownloaded && !Busy);
         RevealCommand = new RelayCommand(_ => Reveal(), _ => IsDownloaded && !Busy);
         OpenRepoCommand = new RelayCommand(_ => OpenUrl(Info.RepoUrl));
+        ToggleDetailsCommand = new RelayCommand(_ => IsDetailsExpanded = !IsDetailsExpanded);
+        OpenDetailsPathCommand = new RelayCommand(_ => OpenLocalPath(), _ => HasLocalPath);
+        CopyLocalPathCommand = new RelayCommand(_ => CopyToClipboard(LocalPath, "APK path"), _ => HasLocalPath);
+        CopyShaCommand = new RelayCommand(_ => CopyToClipboard(FullSha, "SHA-256"), _ => HasSha);
         _downloaded = _downloader.EnsureManifestMetadata(_downloaded);
         _ = LoadIconAsync();
     }
@@ -87,6 +92,26 @@ public sealed class AndroidAppCardViewModel : ViewModelBase
     public string PackageNameText => string.IsNullOrWhiteSpace(PackageName) ? "Package unavailable" : PackageName;
     public string ApkVersionCodeText => string.IsNullOrWhiteSpace(ApkVersionCode) ? "Code unavailable" : $"Code {ApkVersionCode}";
     public string ApkVersionNameText => string.IsNullOrWhiteSpace(ApkVersionName) ? "Name unavailable" : $"Name {ApkVersionName}";
+    public bool IsDetailsExpanded
+    {
+        get => _detailsExpanded;
+        set
+        {
+            if (SetField(ref _detailsExpanded, value))
+                OnPropertyChanged(nameof(DetailsButtonLabel));
+        }
+    }
+    public string DetailsButtonLabel => IsDetailsExpanded ? "Hide details" : "Details";
+    public string LocalPath => _downloaded?.FilePath ?? string.Empty;
+    public bool HasLocalPath => !string.IsNullOrWhiteSpace(LocalPath);
+    public string LocalPathText => HasLocalPath ? LocalPath : "Unavailable";
+    public string ArtifactDetailsText => _downloaded is not null
+        ? $"{_downloaded.AssetName} • {Format.Bytes(_downloaded.SizeBytes)}"
+        : Info.AssetUrl is not null ? $"{Info.AssetName} • {Format.Bytes(Info.AssetSizeBytes)}" : "Unavailable";
+    public string ReleaseDetailsText => $"Release: {Format.LocalDateTime(_downloaded?.PublishedAt ?? Info.PublishedAt)}";
+    public string FullSha => _downloaded?.Sha256 ?? string.Empty;
+    public bool HasSha => !string.IsNullOrWhiteSpace(FullSha);
+    public string ShaDetailsText => $"SHA-256: {Format.ShortSha(FullSha)}";
 
     public BitmapImage? Icon { get => _icon; private set => SetField(ref _icon, value); }
 
@@ -111,6 +136,10 @@ public sealed class AndroidAppCardViewModel : ViewModelBase
     public ICommand RemoveCommand { get; }
     public ICommand RevealCommand { get; }
     public ICommand OpenRepoCommand { get; }
+    public ICommand ToggleDetailsCommand { get; }
+    public ICommand OpenDetailsPathCommand { get; }
+    public ICommand CopyLocalPathCommand { get; }
+    public ICommand CopyShaCommand { get; }
 
     private async Task DownloadAsync(object? _)
     {
@@ -180,10 +209,35 @@ public sealed class AndroidAppCardViewModel : ViewModelBase
         _downloader.RevealInExplorer(_downloaded, logProgress);
     }
 
+    private void OpenLocalPath()
+    {
+        var path = LocalPath;
+        if (string.IsNullOrWhiteSpace(path)) return;
+        try
+        {
+            if (File.Exists(path))
+                Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{path}\"") { UseShellExecute = true });
+            else if (Directory.Exists(path))
+                Process.Start(new ProcessStartInfo("explorer.exe", $"\"{path}\"") { UseShellExecute = true });
+        }
+        catch (Exception ex) { _log($"! open path failed: {ex.Message}"); }
+    }
+
     private void OpenUrl(string url)
     {
         try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
         catch (Exception ex) { _log($"! open url failed: {ex.Message}"); }
+    }
+
+    private void CopyToClipboard(string? text, string label)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return;
+        try
+        {
+            Clipboard.SetText(text);
+            _log($"{label} copied to clipboard for {Repo}.");
+        }
+        catch (Exception ex) { _log($"! copy failed: {ex.Message}"); }
     }
 
     private async Task LoadIconAsync()
@@ -228,6 +282,15 @@ public sealed class AndroidAppCardViewModel : ViewModelBase
         OnPropertyChanged(nameof(PackageNameText));
         OnPropertyChanged(nameof(ApkVersionCodeText));
         OnPropertyChanged(nameof(ApkVersionNameText));
+        OnPropertyChanged(nameof(LocalPath));
+        OnPropertyChanged(nameof(HasLocalPath));
+        OnPropertyChanged(nameof(LocalPathText));
+        OnPropertyChanged(nameof(ArtifactDetailsText));
+        OnPropertyChanged(nameof(ReleaseDetailsText));
+        OnPropertyChanged(nameof(FullSha));
+        OnPropertyChanged(nameof(HasSha));
+        OnPropertyChanged(nameof(ShaDetailsText));
         OnPropertyChanged(nameof(HasError));
+        CommandManager.InvalidateRequerySuggested();
     }
 }

@@ -8,6 +8,12 @@ public sealed class InstalledApp
     public required ArtifactKind Kind { get; set; }
     public DateTimeOffset InstalledAt { get; set; }
 
+    public string? AssetName { get; set; }
+    public long AssetSizeBytes { get; set; }
+    public string? Sha256 { get; set; }
+    public string? SourceAssetPath { get; set; }
+    public DateTimeOffset? ReleasePublishedAt { get; set; }
+
     public string? PortableRoot { get; set; }
     public string? ShortcutPath { get; set; }
     public string? ExecutablePath { get; set; }
@@ -21,6 +27,6 @@ public sealed class InstalledApp
 
 public sealed class InstalledAppsManifest
 {
-    public int Version { get; set; } = 1;
+    public int Version { get; set; } = 2;
     public List<InstalledApp> Apps { get; set; } = new();
 }

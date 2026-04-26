@@ -41,6 +41,7 @@ public sealed class InstallService
         log?.Report($"Downloading {info.AssetName} ({Format.Bytes(info.AssetSizeBytes)})...");
         await _http.DownloadToFileAsync(info.AssetUrl!, stagedFile, bytes, ct);
 
+        string? sha = null;
         if (cfg.DesktopVerifyHashSidecar)
         {
             if (string.IsNullOrEmpty(info.Sha256Url))
@@ -59,9 +60,11 @@ public sealed class InstallService
                     log?.Report($"  ! {result.Detail} (expected {result.ExpectedHash}, actual {result.ActualHash})");
                     throw new InvalidOperationException($"Hash verification failed: {result.Detail}");
                 }
+                sha = result.ActualHash;
                 log?.Report($"  ✓ SHA-256 OK");
             }
         }
+        sha ??= await HashVerifier.ComputeSha256Async(stagedFile, ct);
 
         var refinedKind = info.Kind == ArtifactKind.PortableZip || info.Kind == ArtifactKind.Msi
             ? info.Kind
@@ -78,6 +81,11 @@ public sealed class InstallService
             ArtifactKind.PortableZip => await InstallPortableAsync(info, cfg, stagedFile, log, ct),
             _ => throw new InvalidOperationException($"Unsupported artifact kind: {refinedKind}")
         };
+        record.AssetName = info.AssetName;
+        record.AssetSizeBytes = info.AssetSizeBytes;
+        record.Sha256 = sha;
+        record.SourceAssetPath = stagedFile;
+        record.ReleasePublishedAt = info.PublishedAt;
 
         _manifest.Apps.RemoveAll(e =>
             e.RepoOwner.Equals(info.RepoOwner, StringComparison.OrdinalIgnoreCase) &&

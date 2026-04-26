@@ -18,4 +18,17 @@ internal static class Format
         var local = refreshedUtc.Value.ToLocalTime();
         return $"Last refreshed: {local:MMM d, h:mm tt}";
     }
+
+    public static string LocalDateTime(DateTimeOffset? timestamp)
+    {
+        if (timestamp is null) return "Unavailable";
+        return timestamp.Value.ToLocalTime().ToString("MMM d, yyyy h:mm tt");
+    }
+
+    public static string ShortSha(string? sha)
+    {
+        if (string.IsNullOrWhiteSpace(sha)) return "Unavailable";
+        var clean = sha.Trim();
+        return clean.Length <= 12 ? clean : clean[..12];
+    }
 }

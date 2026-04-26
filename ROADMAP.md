@@ -28,8 +28,13 @@ MyPortfolio uses this file as the public implementation checklist. Local scratch
   - Surface package name, version code, and version name in Android cards.
   - Added binary/plain manifest decoding for downloaded APKs, persisted metadata in the Android downloads manifest, and included metadata in card display and search.
 
-## Next
-
-- [ ] v0.7.0 — Local artifact details
+- [x] v0.7.0 — Local artifact details
   - Add a consistent details surface for installed/downloaded artifacts across tabs.
   - Include file path, SHA-256, asset size, release date, and copy/open actions without crowding cards.
+  - Added collapsible card details for Desktop, Chrome, and Android plus persisted source asset metadata for newly installed/downloaded artifacts.
+
+## Next
+
+- [ ] v0.8.0 — Catalog resilience and diagnostics
+  - Surface GitHub rate-limit and partial-failure state without burying it in the activity log.
+  - Add clearer per-owner discovery summaries when one configured owner fails and others still load.

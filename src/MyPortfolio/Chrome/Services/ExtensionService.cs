@@ -1,5 +1,6 @@
 using System.IO;
 using System.IO.Compression;
+using System.Security.Cryptography;
 using MyPortfolio.Common;
 using MyPortfolio.Chrome.Models;
 
@@ -32,6 +33,7 @@ public sealed class ExtensionService
 
         log?.Report($"Downloading {info.AssetName} ({Format.Bytes(info.AssetSizeBytes)})...");
         var data = await _http.DownloadBytesAsync(info.AssetUrl, bytes, ct);
+        var sha = Convert.ToHexString(SHA256.HashData(data)).ToLowerInvariant();
 
         var version = info.DisplayVersion.Replace('/', '_').Replace('\\', '_');
         var targetDir = Path.Combine(_settings.ChromeExtensionsRoot, info.RepoOwner, info.RepoName, version);
@@ -71,6 +73,10 @@ public sealed class ExtensionService
             Version = info.DisplayVersion,
             InstallPath = extensionRoot,
             ManifestPath = manifestPath,
+            AssetName = info.AssetName,
+            AssetSizeBytes = info.AssetSizeBytes,
+            Sha256 = sha,
+            ReleasePublishedAt = info.PublishedAt,
             InstalledAt = DateTimeOffset.UtcNow
         };
         _manifest.Extensions.Add(entry);

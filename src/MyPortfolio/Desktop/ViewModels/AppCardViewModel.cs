@@ -23,6 +23,7 @@ public sealed class AppCardViewModel : ViewModelBase
     private string? _errorMessage;
     private InstalledApp? _installed;
     private BitmapImage? _icon;
+    private bool _detailsExpanded;
 
     public AppInfo Info { get; }
 
@@ -49,6 +50,10 @@ public sealed class AppCardViewModel : ViewModelBase
         RunCommand = new RelayCommand(_ => Run(), _ => CanRun);
         OpenRepoCommand = new RelayCommand(_ => OpenUrl(Info.RepoUrl));
         OpenInstallDirCommand = new RelayCommand(_ => OpenDir(), _ => CanOpenDir);
+        ToggleDetailsCommand = new RelayCommand(_ => IsDetailsExpanded = !IsDetailsExpanded);
+        OpenDetailsPathCommand = new RelayCommand(_ => OpenLocalPath(), _ => HasLocalPath);
+        CopyLocalPathCommand = new RelayCommand(_ => CopyToClipboard(LocalPath, "Local path"), _ => HasLocalPath);
+        CopyShaCommand = new RelayCommand(_ => CopyToClipboard(FullSha, "SHA-256"), _ => HasSha);
         _ = LoadIconAsync();
     }
 
@@ -83,6 +88,30 @@ public sealed class AppCardViewModel : ViewModelBase
     public string InstalledDetail => IsInstalled
         ? $"Local v{_installed!.Version} • {_installed.Kind.DisplayName()}"
         : "Not installed locally";
+    public bool IsDetailsExpanded
+    {
+        get => _detailsExpanded;
+        set
+        {
+            if (SetField(ref _detailsExpanded, value))
+                OnPropertyChanged(nameof(DetailsButtonLabel));
+        }
+    }
+    public string DetailsButtonLabel => IsDetailsExpanded ? "Hide details" : "Details";
+    public string LocalPath => _installed?.PortableRoot
+        ?? _installed?.InstallLocation
+        ?? _installed?.ExecutablePath
+        ?? _installed?.SourceAssetPath
+        ?? string.Empty;
+    public bool HasLocalPath => !string.IsNullOrWhiteSpace(LocalPath);
+    public string LocalPathText => HasLocalPath ? LocalPath : "Unavailable";
+    public string ArtifactDetailsText => _installed?.AssetName is { Length: > 0 } asset
+        ? $"{asset} • {Format.Bytes(_installed.AssetSizeBytes)}"
+        : Info.AssetUrl is not null ? $"{Info.AssetName} • {Format.Bytes(Info.AssetSizeBytes)}" : "Unavailable";
+    public string ReleaseDetailsText => $"Release: {Format.LocalDateTime(_installed?.ReleasePublishedAt ?? Info.PublishedAt)}";
+    public string FullSha => _installed?.Sha256 ?? string.Empty;
+    public bool HasSha => !string.IsNullOrWhiteSpace(FullSha);
+    public string ShaDetailsText => $"SHA-256: {Format.ShortSha(FullSha)}";
 
     public BitmapImage? Icon { get => _icon; private set => SetField(ref _icon, value); }
 
@@ -110,6 +139,10 @@ public sealed class AppCardViewModel : ViewModelBase
     public ICommand RunCommand { get; }
     public ICommand OpenRepoCommand { get; }
     public ICommand OpenInstallDirCommand { get; }
+    public ICommand ToggleDetailsCommand { get; }
+    public ICommand OpenDetailsPathCommand { get; }
+    public ICommand CopyLocalPathCommand { get; }
+    public ICommand CopyShaCommand { get; }
 
     private async Task InstallAsync(object? _)
     {
@@ -196,10 +229,35 @@ public sealed class AppCardViewModel : ViewModelBase
         catch (Exception ex) { _log($"! open dir failed: {ex.Message}"); }
     }
 
+    private void OpenLocalPath()
+    {
+        var path = LocalPath;
+        if (string.IsNullOrWhiteSpace(path)) return;
+        try
+        {
+            if (File.Exists(path))
+                Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{path}\"") { UseShellExecute = true });
+            else if (Directory.Exists(path))
+                Process.Start(new ProcessStartInfo("explorer.exe", $"\"{path}\"") { UseShellExecute = true });
+        }
+        catch (Exception ex) { _log($"! open path failed: {ex.Message}"); }
+    }
+
     private void OpenUrl(string url)
     {
         try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
         catch (Exception ex) { _log($"! open url failed: {ex.Message}"); }
+    }
+
+    private void CopyToClipboard(string? text, string label)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return;
+        try
+        {
+            Clipboard.SetText(text);
+            _log($"{label} copied to clipboard for {Repo}.");
+        }
+        catch (Exception ex) { _log($"! copy failed: {ex.Message}"); }
     }
 
     private async Task LoadIconAsync()
@@ -241,6 +299,15 @@ public sealed class AppCardViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsUpdateAvailable));
         OnPropertyChanged(nameof(CanOpenDir));
         OnPropertyChanged(nameof(InstalledDetail));
+        OnPropertyChanged(nameof(LocalPath));
+        OnPropertyChanged(nameof(HasLocalPath));
+        OnPropertyChanged(nameof(LocalPathText));
+        OnPropertyChanged(nameof(ArtifactDetailsText));
+        OnPropertyChanged(nameof(ReleaseDetailsText));
+        OnPropertyChanged(nameof(FullSha));
+        OnPropertyChanged(nameof(HasSha));
+        OnPropertyChanged(nameof(ShaDetailsText));
         OnPropertyChanged(nameof(HasError));
+        CommandManager.InvalidateRequerySuggested();
     }
 }

@@ -13,6 +13,7 @@ public sealed class DownloadedApk
     public string? VersionCode { get; set; }
     public string? VersionName { get; set; }
     public DateTimeOffset DownloadedAt { get; set; }
+    public DateTimeOffset? PublishedAt { get; set; }
     public string Key => $"{RepoOwner}/{RepoName}";
     public bool HasManifestMetadata =>
         !string.IsNullOrWhiteSpace(PackageName) ||
@@ -22,6 +23,6 @@ public sealed class DownloadedApk
 
 public sealed class DownloadedApksManifest
 {
-    public int Version { get; set; } = 2;
+    public int Version { get; set; } = 3;
     public List<DownloadedApk> Apks { get; set; } = new();
 }

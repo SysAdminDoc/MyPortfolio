@@ -79,7 +79,7 @@ dotnet build src/MyPortfolio/MyPortfolio.csproj -c Release
 8. Click **Save and refresh all** — every tab populates simultaneously.
 9. Switch between tabs and click **Install** / **Download APK** / **Launch with extensions** as you like.
 
-Each tab shows its last successful refresh time beside its catalog summary, so stale discovery state is visible before you install or download anything. Downloaded Android cards also show the APK package name plus manifest version name and code when the manifest can be decoded.
+Each tab shows its last successful refresh time beside its catalog summary, so stale discovery state is visible before you install or download anything. Downloaded Android cards also show the APK package name plus manifest version name and code when the manifest can be decoded. The **Details** action on each card expands local artifact metadata, including path, release asset, SHA-256, release date, and copy/open shortcuts.
 
 Every action streams into the activity log at the bottom of the window. Nothing fails silently; everything is logged in-app and to `%LOCALAPPDATA%\MyPortfolio\logs\`.
 
@@ -90,9 +90,9 @@ Every action streams into the activity log at the bottom of the window. Nothing 
 ```
 %APPDATA%\MyPortfolio\
 ├── settings.json                 # one shared AppSettings instance
-├── desktop-installed.json        # InstalledAppsManifest (Desktop tab)
-├── chrome-installed.json         # InstalledExtensionsManifest (Chrome tab)
-└── android-downloads.json        # DownloadedApksManifest (Android tab)
+├── desktop-installed.json        # InstalledAppsManifest + local artifact details
+├── chrome-installed.json         # InstalledExtensionsManifest + local artifact details
+└── android-downloads.json        # DownloadedApksManifest + APK manifest details
 
 %LOCALAPPDATA%\MyPortfolio\
 ├── desktop\apps\<owner>\<repo>\<version>\    # portable ZIP extractions

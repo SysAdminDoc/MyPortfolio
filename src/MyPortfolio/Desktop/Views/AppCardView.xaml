@@ -7,7 +7,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
-             Width="378" Height="306">
+             Width="378" MinHeight="306">
     <UserControl.Resources>
         <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
         <conv:NullToVisibilityConverter x:Key="NullToVis" />
@@ -19,6 +19,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -117,16 +118,63 @@
                              Margin="0,8,0,0" Visibility="{Binding Busy, Converter={StaticResource BoolToVis}}" />
             </Grid>
 
-            <TextBlock Grid.Row="4" Text="{Binding BusyMessage}"
+            <Border Grid.Row="4"
+                    BorderBrush="{DynamicResource Surface0Brush}"
+                    BorderThickness="0,1,0,0"
+                    Padding="0,8,0,0"
+                    Margin="0,0,0,8"
+                    Visibility="{Binding IsDetailsExpanded, Converter={StaticResource BoolToVis}}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="64" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Path" Style="{StaticResource MuteText}" />
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding LocalPathText}"
+                               Style="{StaticResource MuteText}" FontFamily="Cascadia Mono, Consolas"
+                               TextTrimming="CharacterEllipsis" />
+                    <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" Margin="8,0,0,0">
+                        <Button Content="Copy path" Style="{StaticResource LinkButton}"
+                                Command="{Binding CopyLocalPathCommand}" IsEnabled="{Binding HasLocalPath}" />
+                        <Button Content="Open" Style="{StaticResource LinkButton}"
+                                Command="{Binding OpenDetailsPathCommand}" IsEnabled="{Binding HasLocalPath}" />
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Asset" Style="{StaticResource MuteText}" Margin="0,4,0,0" />
+                    <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                               Text="{Binding ArtifactDetailsText}" Style="{StaticResource MuteText}"
+                               Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Trust" Style="{StaticResource MuteText}" Margin="0,4,0,0" />
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ShaDetailsText}"
+                               Style="{StaticResource MuteText}" Margin="0,4,0,0" />
+                    <StackPanel Grid.Row="2" Grid.Column="2" Orientation="Horizontal" Margin="8,4,0,0">
+                        <Button Content="Copy SHA" Style="{StaticResource LinkButton}"
+                                Command="{Binding CopyShaCommand}" IsEnabled="{Binding HasSha}" />
+                        <TextBlock Text="{Binding ReleaseDetailsText}" Style="{StaticResource MuteText}"
+                                   VerticalAlignment="Center" Margin="4,0,0,0"
+                                   MaxWidth="128" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <TextBlock Grid.Row="5" Text="{Binding BusyMessage}"
                        Foreground="{DynamicResource SapphireBrush}" FontSize="11" FontWeight="SemiBold"
                        Margin="0,0,0,6" Visibility="{Binding Busy, Converter={StaticResource BoolToVis}}" />
 
-            <TextBlock Grid.Row="5" Text="{Binding ErrorMessage}"
+            <TextBlock Grid.Row="6" Text="{Binding ErrorMessage}"
                        Foreground="{DynamicResource RedBrush}" FontSize="11" FontWeight="SemiBold"
                        TextWrapping="Wrap" Margin="0,0,0,8"
                        Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}" />
 
-            <Grid Grid.Row="6">
+            <Grid Grid.Row="7">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -135,6 +183,8 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="{Binding DetailsButtonLabel}" Style="{StaticResource LinkButton}"
+                        Command="{Binding ToggleDetailsCommand}" HorizontalAlignment="Left" />
                 <Button Grid.Column="1" Content="{Binding InstallButtonLabel}"
                         Style="{StaticResource AccentButton}" Command="{Binding InstallCommand}"
                         IsEnabled="{Binding CanInstall}" MinWidth="96" Margin="0,0,6,0" />
