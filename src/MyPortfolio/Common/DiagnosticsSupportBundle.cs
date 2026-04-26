@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -6,6 +8,34 @@ namespace MyPortfolio.Common;
 public static partial class DiagnosticsSupportBundle
 {
     private const string RedactedToken = "[redacted token]";
+
+    public static string SaveToFile(
+        string tabName,
+        DiscoveryDiagnostics diagnostics,
+        IEnumerable<string> recentLogLines,
+        string? currentToken)
+    {
+        var bundle = Build(tabName, diagnostics, recentLogLines, currentToken);
+        var directory = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "MyPortfolio",
+            "diagnostics");
+        Directory.CreateDirectory(directory);
+
+        var timestamp = DateTimeOffset.Now.ToString("yyyyMMdd-HHmmss-fff");
+        var fileName = $"MyPortfolio-diagnostics-{SafeFileSegment(tabName)}-{timestamp}.txt";
+        var path = Path.Combine(directory, fileName);
+        File.WriteAllText(path, bundle, Encoding.UTF8);
+        return path;
+    }
+
+    public static void RevealFile(string path)
+    {
+        Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{path}\"")
+        {
+            UseShellExecute = true
+        });
+    }
 
     public static string Build(
         string tabName,
@@ -76,9 +106,27 @@ public static partial class DiagnosticsSupportBundle
         return sanitized;
     }
 
+    private static string SafeFileSegment(string value)
+    {
+        var sb = new StringBuilder();
+        foreach (var ch in value.Trim().ToLowerInvariant())
+        {
+            if (char.IsLetterOrDigit(ch))
+                sb.Append(ch);
+            else if (char.IsWhiteSpace(ch) || ch is '-' or '_')
+                sb.Append('-');
+        }
+
+        var normalized = DashPattern().Replace(sb.ToString(), "-").Trim('-');
+        return string.IsNullOrWhiteSpace(normalized) ? "catalog" : normalized;
+    }
+
     [GeneratedRegex(@"\b(?:github_pat_[A-Za-z0-9_]{20,}|gh[pousr]_[A-Za-z0-9_]{20,})\b")]
     private static partial Regex GitHubTokenPattern();
 
     [GeneratedRegex(@"(?i)\b((?:authorization:\s*(?:bearer|token)\s+|(?:access_)?token\s*[=:]\s*))([^\s,;]+)")]
     private static partial Regex TokenAssignmentPattern();
+
+    [GeneratedRegex("-{2,}")]
+    private static partial Regex DashPattern();
 }

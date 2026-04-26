@@ -32,6 +32,7 @@ public sealed class AndroidTabViewModel : ViewModelBase
     public ICommand OpenDownloadFolderCommand { get; }
     public ICommand ToggleDiscoveryDetailsCommand { get; }
     public ICommand CopyDiagnosticsCommand { get; }
+    public ICommand SaveDiagnosticsCommand { get; }
 
     public AndroidTabViewModel(
         SettingsService settingsService,
@@ -55,6 +56,7 @@ public sealed class AndroidTabViewModel : ViewModelBase
         OpenDownloadFolderCommand = new RelayCommand(_ => OpenDownloadFolder());
         ToggleDiscoveryDetailsCommand = new RelayCommand(_ => ToggleDiscoveryDetails(), _ => HasOwnerDiagnostics);
         CopyDiagnosticsCommand = new RelayCommand(_ => CopyDiagnostics(), _ => HasDiscoveryDiagnostics);
+        SaveDiagnosticsCommand = new RelayCommand(_ => SaveDiagnostics(), _ => HasDiscoveryDiagnostics);
     }
 
     public bool Busy
@@ -259,6 +261,25 @@ public sealed class AndroidTabViewModel : ViewModelBase
         catch (Exception ex)
         {
             _log.Append("Android", $"! Copy diagnostics failed: {ex.Message}");
+        }
+    }
+
+    private void SaveDiagnostics()
+    {
+        try
+        {
+            var path = DiagnosticsSupportBundle.SaveToFile(
+                "Android APKs",
+                _diagnostics,
+                _log.RecentLines(40),
+                _settingsAccessor().GitHubToken);
+            _log.Append("Android", $"Saved diagnostics bundle to {path}.");
+            try { DiagnosticsSupportBundle.RevealFile(path); }
+            catch (Exception ex) { _log.Append("Android", $"! Saved diagnostics but could not reveal it: {ex.Message}"); }
+        }
+        catch (Exception ex)
+        {
+            _log.Append("Android", $"! Save diagnostics failed: {ex.Message}");
         }
     }
 

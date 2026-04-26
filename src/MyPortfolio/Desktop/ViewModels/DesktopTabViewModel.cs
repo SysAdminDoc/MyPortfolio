@@ -32,6 +32,7 @@ public sealed class DesktopTabViewModel : ViewModelBase
     public ICommand OpenInstallDirCommand { get; }
     public ICommand ToggleDiscoveryDetailsCommand { get; }
     public ICommand CopyDiagnosticsCommand { get; }
+    public ICommand SaveDiagnosticsCommand { get; }
 
     public DesktopTabViewModel(
         SettingsService settingsService,
@@ -55,6 +56,7 @@ public sealed class DesktopTabViewModel : ViewModelBase
         OpenInstallDirCommand = new RelayCommand(_ => OpenInstallDir());
         ToggleDiscoveryDetailsCommand = new RelayCommand(_ => ToggleDiscoveryDetails(), _ => HasOwnerDiagnostics);
         CopyDiagnosticsCommand = new RelayCommand(_ => CopyDiagnostics(), _ => HasDiscoveryDiagnostics);
+        SaveDiagnosticsCommand = new RelayCommand(_ => SaveDiagnostics(), _ => HasDiscoveryDiagnostics);
     }
 
     public bool Busy
@@ -257,6 +259,25 @@ public sealed class DesktopTabViewModel : ViewModelBase
         catch (Exception ex)
         {
             _log.Append("Desktop", $"! Copy diagnostics failed: {ex.Message}");
+        }
+    }
+
+    private void SaveDiagnostics()
+    {
+        try
+        {
+            var path = DiagnosticsSupportBundle.SaveToFile(
+                "Desktop apps",
+                _diagnostics,
+                _log.RecentLines(40),
+                _settingsAccessor().GitHubToken);
+            _log.Append("Desktop", $"Saved diagnostics bundle to {path}.");
+            try { DiagnosticsSupportBundle.RevealFile(path); }
+            catch (Exception ex) { _log.Append("Desktop", $"! Saved diagnostics but could not reveal it: {ex.Message}"); }
+        }
+        catch (Exception ex)
+        {
+            _log.Append("Desktop", $"! Save diagnostics failed: {ex.Message}");
         }
     }
 

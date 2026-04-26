@@ -63,8 +63,13 @@ MyPortfolio uses this file as the public implementation checklist. Local scratch
   - Include rate-limit state and recent activity-log lines without exposing the saved GitHub token.
   - Added per-tab copied diagnostics bundles with owner breakdowns, rate-limit state, recent activity, and token redaction before clipboard writes.
 
-## Next
-
-- [ ] v0.14.0 — Diagnostics export file
+- [x] v0.14.0 — Diagnostics export file
   - Add a Save diagnostics action that writes the same redacted support bundle to a timestamped `.txt` file.
   - Open or reveal the exported file after save and report failures in the activity log.
+  - Added per-tab Save diagnostics actions that write redacted bundles to `%LOCALAPPDATA%\MyPortfolio\diagnostics\` and reveal the saved file in Explorer.
+
+## Next
+
+- [ ] v0.15.0 — Diagnostics retention controls
+  - Add a small cleanup action for old exported diagnostics bundles.
+  - Show the diagnostics export folder from settings or the activity log without requiring a fresh export.

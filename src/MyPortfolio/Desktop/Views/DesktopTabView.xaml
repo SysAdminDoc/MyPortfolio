@@ -97,6 +97,10 @@
                                 <Button Content="Copy diagnostics"
                                         Command="{Binding CopyDiagnosticsCommand}"
                                         Style="{StaticResource LinkButton}" Padding="8,2" MinHeight="24" />
+                                <Button Content="Save diagnostics"
+                                        Command="{Binding SaveDiagnosticsCommand}"
+                                        Style="{StaticResource LinkButton}" Padding="8,2" MinHeight="24" Margin="4,0,0,0"
+                                        ToolTip="Save a redacted diagnostics text file and reveal it in Explorer" />
                                 <Button Content="{Binding DiscoveryDetailsButtonText}"
                                         Command="{Binding ToggleDiscoveryDetailsCommand}"
                                         Style="{StaticResource LinkButton}" Padding="8,2" MinHeight="24" Margin="4,0,0,0"

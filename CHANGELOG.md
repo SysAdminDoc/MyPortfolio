@@ -18,6 +18,7 @@ All notable changes to MyPortfolio are documented here. Format follows [Keep a C
 - Per-tab refresh progress text and counts with visible skipped archived, hidden, and topic-filtered repository summaries.
 - Expandable per-owner discovery diagnostics with matched, skipped, cached, failed, and probe-issue counts.
 - One-click copied diagnostics bundles with owner summaries, rate-limit state, recent activity, and GitHub token redaction.
+- Per-tab saved diagnostics bundles that write the same redacted support text to timestamped files and reveal them in Explorer.
 - Tracked public roadmap file for completed and upcoming implementation passes.
 
 ## v0.1.0 — 2026-04-25
