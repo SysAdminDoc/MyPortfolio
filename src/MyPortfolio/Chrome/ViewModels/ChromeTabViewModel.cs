@@ -36,6 +36,7 @@ public sealed class ChromeTabViewModel : ViewModelBase
     public ICommand LaunchBrowserCommand { get; }
     public ICommand OpenInstallDirCommand { get; }
     public ICommand ToggleDiscoveryDetailsCommand { get; }
+    public ICommand CopyDiagnosticsCommand { get; }
 
     public ChromeTabViewModel(
         SettingsService settingsService,
@@ -60,6 +61,7 @@ public sealed class ChromeTabViewModel : ViewModelBase
         LaunchBrowserCommand = new RelayCommand(_ => LaunchBrowser(), _ => CanLaunchBrowser);
         OpenInstallDirCommand = new RelayCommand(_ => OpenInstallDir());
         ToggleDiscoveryDetailsCommand = new RelayCommand(_ => ToggleDiscoveryDetails(), _ => HasOwnerDiagnostics);
+        CopyDiagnosticsCommand = new RelayCommand(_ => CopyDiagnostics(), _ => HasDiscoveryDiagnostics);
 
         DetectBrowsers();
     }
@@ -139,6 +141,7 @@ public sealed class ChromeTabViewModel : ViewModelBase
     public string DiscoveryWarningText => _diagnostics.WarningText;
     public bool HasRateLimitText => !string.IsNullOrWhiteSpace(RateLimitText);
     public string RateLimitText => _diagnostics.RateLimitText;
+    public bool CanCopyDiagnostics => HasDiscoveryDiagnostics;
     public IReadOnlyList<OwnerDiscoveryResult> OwnerDiagnostics => _diagnostics.Owners;
     public bool HasOwnerDiagnostics => _diagnostics.HasOwnerDetails;
     public bool ShowDiscoveryDetails => _showDiscoveryDetails && HasOwnerDiagnostics;
@@ -298,6 +301,7 @@ public sealed class ChromeTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(DiscoveryWarningText));
         OnPropertyChanged(nameof(HasRateLimitText));
         OnPropertyChanged(nameof(RateLimitText));
+        OnPropertyChanged(nameof(CanCopyDiagnostics));
         OnPropertyChanged(nameof(OwnerDiagnostics));
         OnPropertyChanged(nameof(HasOwnerDiagnostics));
         OnPropertyChanged(nameof(ShowDiscoveryDetails));
@@ -311,6 +315,24 @@ public sealed class ChromeTabViewModel : ViewModelBase
         _showDiscoveryDetails = !ShowDiscoveryDetails;
         OnPropertyChanged(nameof(ShowDiscoveryDetails));
         OnPropertyChanged(nameof(DiscoveryDetailsButtonText));
+    }
+
+    private void CopyDiagnostics()
+    {
+        try
+        {
+            var bundle = DiagnosticsSupportBundle.Build(
+                "Chrome extensions",
+                _diagnostics,
+                _log.RecentLines(40),
+                _settingsAccessor().GitHubToken);
+            Clipboard.SetText(bundle);
+            _log.Append("Chrome", "Copied diagnostics bundle to clipboard.");
+        }
+        catch (Exception ex)
+        {
+            _log.Append("Chrome", $"! Copy diagnostics failed: {ex.Message}");
+        }
     }
 
     private void UpdateRefreshProgress(DiscoveryProgress progress, int version)

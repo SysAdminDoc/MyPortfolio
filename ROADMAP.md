@@ -58,8 +58,13 @@ MyPortfolio uses this file as the public implementation checklist. Local scratch
   - Keep the compact header summary readable when many owners are configured.
   - Added an on-demand owner diagnostics section with matched, skipped, cached, failed, and probe-issue counts in a bounded detail list.
 
-## Next
-
-- [ ] v0.13.0 — Diagnostics support bundle
+- [x] v0.13.0 — Diagnostics support bundle
   - Add a one-click copy/export action for the compact diagnostics summary and expanded owner breakdown.
   - Include rate-limit state and recent activity-log lines without exposing the saved GitHub token.
+  - Added per-tab copied diagnostics bundles with owner breakdowns, rate-limit state, recent activity, and token redaction before clipboard writes.
+
+## Next
+
+- [ ] v0.14.0 — Diagnostics export file
+  - Add a Save diagnostics action that writes the same redacted support bundle to a timestamped `.txt` file.
+  - Open or reveal the exported file after save and report failures in the activity log.

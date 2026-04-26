@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 using MyPortfolio.Common;
@@ -30,6 +31,7 @@ public sealed class DesktopTabViewModel : ViewModelBase
     public ICommand RefreshCommand { get; }
     public ICommand OpenInstallDirCommand { get; }
     public ICommand ToggleDiscoveryDetailsCommand { get; }
+    public ICommand CopyDiagnosticsCommand { get; }
 
     public DesktopTabViewModel(
         SettingsService settingsService,
@@ -52,6 +54,7 @@ public sealed class DesktopTabViewModel : ViewModelBase
         RefreshCommand = new AsyncRelayCommand(_ => RefreshAsync(), _ => !Busy);
         OpenInstallDirCommand = new RelayCommand(_ => OpenInstallDir());
         ToggleDiscoveryDetailsCommand = new RelayCommand(_ => ToggleDiscoveryDetails(), _ => HasOwnerDiagnostics);
+        CopyDiagnosticsCommand = new RelayCommand(_ => CopyDiagnostics(), _ => HasDiscoveryDiagnostics);
     }
 
     public bool Busy
@@ -103,6 +106,7 @@ public sealed class DesktopTabViewModel : ViewModelBase
     public string DiscoveryWarningText => _diagnostics.WarningText;
     public bool HasRateLimitText => !string.IsNullOrWhiteSpace(RateLimitText);
     public string RateLimitText => _diagnostics.RateLimitText;
+    public bool CanCopyDiagnostics => HasDiscoveryDiagnostics;
     public IReadOnlyList<OwnerDiscoveryResult> OwnerDiagnostics => _diagnostics.Owners;
     public bool HasOwnerDiagnostics => _diagnostics.HasOwnerDetails;
     public bool ShowDiscoveryDetails => _showDiscoveryDetails && HasOwnerDiagnostics;
@@ -222,6 +226,7 @@ public sealed class DesktopTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(DiscoveryWarningText));
         OnPropertyChanged(nameof(HasRateLimitText));
         OnPropertyChanged(nameof(RateLimitText));
+        OnPropertyChanged(nameof(CanCopyDiagnostics));
         OnPropertyChanged(nameof(OwnerDiagnostics));
         OnPropertyChanged(nameof(HasOwnerDiagnostics));
         OnPropertyChanged(nameof(ShowDiscoveryDetails));
@@ -235,6 +240,24 @@ public sealed class DesktopTabViewModel : ViewModelBase
         _showDiscoveryDetails = !ShowDiscoveryDetails;
         OnPropertyChanged(nameof(ShowDiscoveryDetails));
         OnPropertyChanged(nameof(DiscoveryDetailsButtonText));
+    }
+
+    private void CopyDiagnostics()
+    {
+        try
+        {
+            var bundle = DiagnosticsSupportBundle.Build(
+                "Desktop apps",
+                _diagnostics,
+                _log.RecentLines(40),
+                _settingsAccessor().GitHubToken);
+            Clipboard.SetText(bundle);
+            _log.Append("Desktop", "Copied diagnostics bundle to clipboard.");
+        }
+        catch (Exception ex)
+        {
+            _log.Append("Desktop", $"! Copy diagnostics failed: {ex.Message}");
+        }
     }
 
     private void UpdateRefreshProgress(DiscoveryProgress progress, int version)

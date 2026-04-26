@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 using MyPortfolio.Android.Services;
@@ -30,6 +31,7 @@ public sealed class AndroidTabViewModel : ViewModelBase
     public ICommand RefreshCommand { get; }
     public ICommand OpenDownloadFolderCommand { get; }
     public ICommand ToggleDiscoveryDetailsCommand { get; }
+    public ICommand CopyDiagnosticsCommand { get; }
 
     public AndroidTabViewModel(
         SettingsService settingsService,
@@ -52,6 +54,7 @@ public sealed class AndroidTabViewModel : ViewModelBase
         RefreshCommand = new AsyncRelayCommand(_ => RefreshAsync(), _ => !Busy);
         OpenDownloadFolderCommand = new RelayCommand(_ => OpenDownloadFolder());
         ToggleDiscoveryDetailsCommand = new RelayCommand(_ => ToggleDiscoveryDetails(), _ => HasOwnerDiagnostics);
+        CopyDiagnosticsCommand = new RelayCommand(_ => CopyDiagnostics(), _ => HasDiscoveryDiagnostics);
     }
 
     public bool Busy
@@ -104,6 +107,7 @@ public sealed class AndroidTabViewModel : ViewModelBase
     public string DiscoveryWarningText => _diagnostics.WarningText;
     public bool HasRateLimitText => !string.IsNullOrWhiteSpace(RateLimitText);
     public string RateLimitText => _diagnostics.RateLimitText;
+    public bool CanCopyDiagnostics => HasDiscoveryDiagnostics;
     public IReadOnlyList<OwnerDiscoveryResult> OwnerDiagnostics => _diagnostics.Owners;
     public bool HasOwnerDiagnostics => _diagnostics.HasOwnerDetails;
     public bool ShowDiscoveryDetails => _showDiscoveryDetails && HasOwnerDiagnostics;
@@ -224,6 +228,7 @@ public sealed class AndroidTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(DiscoveryWarningText));
         OnPropertyChanged(nameof(HasRateLimitText));
         OnPropertyChanged(nameof(RateLimitText));
+        OnPropertyChanged(nameof(CanCopyDiagnostics));
         OnPropertyChanged(nameof(OwnerDiagnostics));
         OnPropertyChanged(nameof(HasOwnerDiagnostics));
         OnPropertyChanged(nameof(ShowDiscoveryDetails));
@@ -237,6 +242,24 @@ public sealed class AndroidTabViewModel : ViewModelBase
         _showDiscoveryDetails = !ShowDiscoveryDetails;
         OnPropertyChanged(nameof(ShowDiscoveryDetails));
         OnPropertyChanged(nameof(DiscoveryDetailsButtonText));
+    }
+
+    private void CopyDiagnostics()
+    {
+        try
+        {
+            var bundle = DiagnosticsSupportBundle.Build(
+                "Android APKs",
+                _diagnostics,
+                _log.RecentLines(40),
+                _settingsAccessor().GitHubToken);
+            Clipboard.SetText(bundle);
+            _log.Append("Android", "Copied diagnostics bundle to clipboard.");
+        }
+        catch (Exception ex)
+        {
+            _log.Append("Android", $"! Copy diagnostics failed: {ex.Message}");
+        }
     }
 
     private void UpdateRefreshProgress(DiscoveryProgress progress, int version)

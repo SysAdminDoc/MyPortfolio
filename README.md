@@ -79,7 +79,7 @@ dotnet build src/MyPortfolio/MyPortfolio.csproj -c Release
 8. Click **Save and refresh all** — each tab refreshes in a staged pass that can be canceled from the header.
 9. Switch between tabs and click **Install** / **Download APK** / **Launch with extensions** as you like.
 
-Each tab shows its last successful refresh time beside its catalog summary, so stale discovery state is visible before you install or download anything. While a tab refreshes, the header shows the current discovery stage plus owner/repo counts. After refresh, each catalog also shows a compact discovery summary with partial-failure warnings, skipped archived/hidden/topic-filtered repo counts, repo probe issues, cache-hit counts, and current GitHub API quota. Expand **owner diagnostics** when you need the per-owner breakdown of matched, skipped, cached, failed, and probe-issue counts without adding noise to the activity log. Release and topic probes are cached in memory for five minutes per GitHub user/token so repeated refreshes avoid burning through the same per-repo API calls. If GitHub stops discovery for a primary or secondary rate limit, the warning text tells you when or how long to wait before retrying. Downloaded Android cards also show the APK package name plus manifest version name and code when the manifest can be decoded. The **Details** action on each card expands local artifact metadata, including path, release asset, SHA-256, release date, and copy/open shortcuts.
+Each tab shows its last successful refresh time beside its catalog summary, so stale discovery state is visible before you install or download anything. While a tab refreshes, the header shows the current discovery stage plus owner/repo counts. After refresh, each catalog also shows a compact discovery summary with partial-failure warnings, skipped archived/hidden/topic-filtered repo counts, repo probe issues, cache-hit counts, and current GitHub API quota. Expand **owner diagnostics** when you need the per-owner breakdown of matched, skipped, cached, failed, and probe-issue counts without adding noise to the activity log. **Copy diagnostics** creates a shareable support bundle with the compact summary, owner breakdown, rate-limit state, and recent activity lines; the saved GitHub token and common GitHub token formats are redacted before the text reaches the clipboard. Release and topic probes are cached in memory for five minutes per GitHub user/token so repeated refreshes avoid burning through the same per-repo API calls. If GitHub stops discovery for a primary or secondary rate limit, the warning text tells you when or how long to wait before retrying. Downloaded Android cards also show the APK package name plus manifest version name and code when the manifest can be decoded. The **Details** action on each card expands local artifact metadata, including path, release asset, SHA-256, release date, and copy/open shortcuts.
 
 Every action streams into the activity log at the bottom of the window. Nothing fails silently; everything is logged in-app and to `%LOCALAPPDATA%\MyPortfolio\logs\`.
 
@@ -124,8 +124,9 @@ src/MyPortfolio/
 │
 ├── Common/               # ViewModelBase, RelayCommand, AppSettings, SettingsService,
 │                         # GitHubClientFactory, DiscoveryDiagnostics,
-│                         # DiscoveryProgress, DiscoveryProbeCache,
-│                         # HttpDownloader, HashVerifier, LogSink, Format
+│                         # DiscoveryProgress, DiagnosticsSupportBundle,
+│                         # DiscoveryProbeCache, HttpDownloader,
+│                         # HashVerifier, LogSink, Format
 ├── Converters/           # BoolToVis, NullToVis, EmptyStringToVis
 ├── Themes/               # Catppuccin token dictionary + runtime Mocha / Latte theme service
 │

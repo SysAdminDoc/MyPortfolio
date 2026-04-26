@@ -27,6 +27,17 @@ public sealed class LogSink
     public IProgress<string> AsProgress(string prefix)
         => new Progress<string>(s => Append(prefix, s));
 
+    public IReadOnlyList<string> RecentLines(int count)
+    {
+        count = Math.Max(0, count);
+        if (count == 0) return [];
+
+        if (Application.Current?.Dispatcher.CheckAccess() == true)
+            return Lines.TakeLast(count).ToList();
+
+        return Application.Current?.Dispatcher.Invoke(() => Lines.TakeLast(count).ToList()) ?? [];
+    }
+
     private void DoAppend(string line)
     {
         Lines.Add(line);
