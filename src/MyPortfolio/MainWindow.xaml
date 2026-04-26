@@ -40,6 +40,7 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <Border Grid.Column="0" Width="44" Height="44" CornerRadius="8"
@@ -60,10 +61,16 @@
                                Text="One desktop catalog for every app you ship — Windows, Chromium, Android — all from your GitHub releases." />
                 </StackPanel>
 
-                <Button Grid.Column="2" Content="Refresh all" Command="{Binding RefreshAllCommand}"
+                <Button Grid.Column="2" Content="{Binding RefreshAllButtonLabel}" Command="{Binding RefreshAllCommand}"
                         Style="{StaticResource AccentButton}" Margin="0,0,8,0" />
 
-                <Button Grid.Column="3" Content="Settings"
+                <Button Grid.Column="3" Content="{Binding CancelRefreshAllButtonLabel}"
+                        Command="{Binding CancelRefreshAllCommand}"
+                        IsEnabled="{Binding CanCancelRefreshAll}"
+                        Visibility="{Binding IsRefreshingAll, Converter={StaticResource BoolToVis}}"
+                        Style="{StaticResource DangerButton}" Margin="0,0,8,0" />
+
+                <Button Grid.Column="4" Content="Settings"
                         x:Name="SettingsToggleButton"
                         Click="ToggleSettings_Click" />
             </Grid>

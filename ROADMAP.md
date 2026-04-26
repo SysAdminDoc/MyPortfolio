@@ -43,8 +43,13 @@ MyPortfolio uses this file as the public implementation checklist. Local scratch
   - Cache release probes briefly to avoid repeated refreshes burning GitHub API quota.
   - Kept discovery serial to avoid secondary-rate bursts, raised repo-list page size to 100, and added a five-minute token-aware cache for release/topic probes with visible cache-hit counts.
 
-## Next
-
-- [ ] v0.10.0 — Refresh recovery controls
+- [x] v0.10.0 — Refresh recovery controls
   - Add cancellation for long-running refresh-all passes.
   - Add clearer retry/backoff guidance after primary or secondary GitHub rate-limit stops.
+  - Added a staged refresh-all sequence with a cancel action, cancellation-aware tab refreshes, and clearer rate-limit retry guidance in diagnostics.
+
+## Next
+
+- [ ] v0.11.0 — Refresh progress visibility
+  - Show per-tab refresh stage/count progress while discovery is running.
+  - Surface skipped archived, hidden, and topic-filtered repo counts without expanding the activity log.

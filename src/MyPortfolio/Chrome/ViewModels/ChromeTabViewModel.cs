@@ -145,13 +145,16 @@ public sealed class ChromeTabViewModel : ViewModelBase
             || vm.Repo.Contains(q, StringComparison.OrdinalIgnoreCase);
     }
 
-    public async Task RefreshAsync()
+    public Task RefreshAsync() => RefreshAsync(CancellationToken.None);
+
+    public async Task RefreshAsync(CancellationToken ct)
     {
         Busy = true;
         try
         {
             _log.Append("Chrome", "Discovering Chrome extensions...");
-            var result = await _github.DiscoverAsync(_settingsAccessor(), _log.AsProgress("Chrome"));
+            var result = await _github.DiscoverAsync(_settingsAccessor(), _log.AsProgress("Chrome"), ct);
+            ct.ThrowIfCancellationRequested();
             ApplyDiagnostics(result.Diagnostics);
             Extensions.Clear();
             foreach (var info in result.Items)
@@ -167,6 +170,11 @@ public sealed class ChromeTabViewModel : ViewModelBase
             MarkRefreshed();
             _log.Append("Chrome", $"Found {Extensions.Count} extension(s) — {InstalledCount} installed.");
             if (_diagnostics.HasWarnings) _log.Append("Chrome", $"! {_diagnostics.WarningText}");
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            _log.Append("Chrome", "Refresh canceled.");
+            throw;
         }
         catch (Exception ex) { _log.Append("Chrome", $"! Refresh failed: {ex.Message}"); }
         finally { Busy = false; }

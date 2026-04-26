@@ -76,10 +76,10 @@ dotnet build src/MyPortfolio/MyPortfolio.csproj -c Release
 5. Toggle topic filters per tab if you want to scope discovery (`windows-app`, `chrome-extension`, `android-app` are the suggested defaults).
 6. Pick a Catppuccin **Theme** and **Accent** if you want a lighter surface or a different focus color.
 7. Enable **Refresh all tabs when MyPortfolio starts** if you want discovery to run automatically on launch.
-8. Click **Save and refresh all** — every tab populates simultaneously.
+8. Click **Save and refresh all** — each tab refreshes in a staged pass that can be canceled from the header.
 9. Switch between tabs and click **Install** / **Download APK** / **Launch with extensions** as you like.
 
-Each tab shows its last successful refresh time beside its catalog summary, so stale discovery state is visible before you install or download anything. After refresh, each catalog also shows a compact discovery summary with per-owner results, partial-failure warnings, repo probe issues, cache-hit counts, and current GitHub API quota. Release and topic probes are cached in memory for five minutes per GitHub user/token so repeated refreshes avoid burning through the same per-repo API calls. Downloaded Android cards also show the APK package name plus manifest version name and code when the manifest can be decoded. The **Details** action on each card expands local artifact metadata, including path, release asset, SHA-256, release date, and copy/open shortcuts.
+Each tab shows its last successful refresh time beside its catalog summary, so stale discovery state is visible before you install or download anything. After refresh, each catalog also shows a compact discovery summary with per-owner results, partial-failure warnings, repo probe issues, cache-hit counts, and current GitHub API quota. Release and topic probes are cached in memory for five minutes per GitHub user/token so repeated refreshes avoid burning through the same per-repo API calls. If GitHub stops discovery for a primary or secondary rate limit, the warning text tells you when or how long to wait before retrying. Downloaded Android cards also show the APK package name plus manifest version name and code when the manifest can be decoded. The **Details** action on each card expands local artifact metadata, including path, release asset, SHA-256, release date, and copy/open shortcuts.
 
 Every action streams into the activity log at the bottom of the window. Nothing fails silently; everything is logged in-app and to `%LOCALAPPDATA%\MyPortfolio\logs\`.
 

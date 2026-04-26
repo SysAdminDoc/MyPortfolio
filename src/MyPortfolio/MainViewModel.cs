@@ -20,6 +20,8 @@ public sealed class MainViewModel : ViewModelBase
     private readonly GitHubClientFactory _factory;
     private readonly LogSink _log;
     private AppSettings _settings;
+    private CancellationTokenSource? _refreshAllCts;
+    private bool _isRefreshingAll;
 
     private string _statusText = "Ready.";
     private string _githubUserInput;
@@ -35,6 +37,7 @@ public sealed class MainViewModel : ViewModelBase
     public ICommand SaveSettingsCommand { get; }
     public ICommand SaveAndRefreshAllCommand { get; }
     public ICommand RefreshAllCommand { get; }
+    public ICommand CancelRefreshAllCommand { get; }
     public ICommand ClearLogCommand { get; }
     public ICommand ClearHiddenReposCommand { get; }
     public ICommand AddExtraOwnerCommand { get; }
@@ -67,13 +70,14 @@ public sealed class MainViewModel : ViewModelBase
         SaveAndRefreshAllCommand = new AsyncRelayCommand(async _ =>
         {
             if (SaveSettings()) await RefreshAllAsync();
-        });
-        RefreshAllCommand = new AsyncRelayCommand(_ => RefreshAllAsync());
+        }, _ => !IsRefreshingAll);
+        RefreshAllCommand = new AsyncRelayCommand(_ => RefreshAllAsync(), _ => !IsRefreshingAll);
+        CancelRefreshAllCommand = new RelayCommand(_ => CancelRefreshAll(), _ => CanCancelRefreshAll);
         ClearLogCommand = new RelayCommand(_ => _log.Lines.Clear());
         ClearHiddenReposCommand = new AsyncRelayCommand(async _ =>
         {
             if (ClearHiddenRepos()) await RefreshAllAsync();
-        }, _ => HasHiddenRepos);
+        }, _ => HasHiddenRepos && !IsRefreshingAll);
         AddExtraOwnerCommand = new RelayCommand(_ => AddExtraOwnersFromEntry(), _ => CanAddExtraOwner);
         RemoveExtraOwnerCommand = new RelayCommand(RemoveExtraOwner);
         ClearExtraOwnersCommand = new RelayCommand(_ => ClearExtraOwners(), _ => HasExtraOwners);
@@ -121,6 +125,25 @@ public sealed class MainViewModel : ViewModelBase
     public string ExtraOwnerSummary => HasExtraOwners
         ? $"{ExtraOwners.Count} extra owner(s) included in discovery."
         : "No extra owners added.";
+
+    public bool IsRefreshingAll
+    {
+        get => _isRefreshingAll;
+        private set
+        {
+            if (SetField(ref _isRefreshingAll, value))
+            {
+                OnPropertyChanged(nameof(CanCancelRefreshAll));
+                OnPropertyChanged(nameof(RefreshAllButtonLabel));
+                OnPropertyChanged(nameof(CancelRefreshAllButtonLabel));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+    }
+
+    public bool CanCancelRefreshAll => IsRefreshingAll && _refreshAllCts?.IsCancellationRequested == false;
+    public string RefreshAllButtonLabel => IsRefreshingAll ? "Refreshing..." : "Refresh all";
+    public string CancelRefreshAllButtonLabel => _refreshAllCts?.IsCancellationRequested == true ? "Canceling..." : "Cancel";
 
     public bool RefreshOnLaunch
     {
@@ -263,9 +286,51 @@ public sealed class MainViewModel : ViewModelBase
 
     private async Task RefreshAllAsync()
     {
+        if (IsRefreshingAll) return;
+        using var cts = new CancellationTokenSource();
+        _refreshAllCts = cts;
+        IsRefreshingAll = true;
         StatusText = "Refreshing all tabs...";
-        await Task.WhenAll(DesktopTab.RefreshAsync(), ChromeTab.RefreshAsync(), AndroidTab.RefreshAsync());
-        StatusText = "All tabs refreshed.";
+        _log.Append("Shell", "Refresh all started.");
+        try
+        {
+            StatusText = "Refreshing desktop apps...";
+            await DesktopTab.RefreshAsync(cts.Token);
+            cts.Token.ThrowIfCancellationRequested();
+
+            StatusText = "Refreshing Chrome extensions...";
+            await ChromeTab.RefreshAsync(cts.Token);
+            cts.Token.ThrowIfCancellationRequested();
+
+            StatusText = "Refreshing Android APKs...";
+            await AndroidTab.RefreshAsync(cts.Token);
+            StatusText = "All tabs refreshed.";
+            _log.Append("Shell", "Refresh all completed.");
+        }
+        catch (OperationCanceledException) when (cts.IsCancellationRequested)
+        {
+            StatusText = "Refresh canceled.";
+            _log.Append("Shell", "Refresh all canceled. Partial results remain visible.");
+        }
+        finally
+        {
+            _refreshAllCts = null;
+            IsRefreshingAll = false;
+            OnPropertyChanged(nameof(CanCancelRefreshAll));
+            OnPropertyChanged(nameof(CancelRefreshAllButtonLabel));
+            CommandManager.InvalidateRequerySuggested();
+        }
+    }
+
+    private void CancelRefreshAll()
+    {
+        if (_refreshAllCts is null || _refreshAllCts.IsCancellationRequested) return;
+        _refreshAllCts.Cancel();
+        StatusText = "Canceling refresh...";
+        _log.Append("Shell", "Cancel requested for refresh all.");
+        OnPropertyChanged(nameof(CanCancelRefreshAll));
+        OnPropertyChanged(nameof(CancelRefreshAllButtonLabel));
+        CommandManager.InvalidateRequerySuggested();
     }
 
     public async Task RefreshOnLaunchIfEnabledAsync()

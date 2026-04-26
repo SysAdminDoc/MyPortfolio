@@ -14,6 +14,7 @@ All notable changes to MyPortfolio are documented here. Format follows [Keep a C
 - Collapsible local artifact details on Desktop, Chrome, and Android cards with file path, release asset, SHA-256, release date, copy, and open actions.
 - Per-tab discovery diagnostics that show owner scan summaries, partial-failure warnings, repo probe issues, and GitHub API quota after refresh.
 - Short-lived, token-aware discovery probe cache plus larger GitHub repo-list pages to reduce repeated refresh quota usage.
+- Staged refresh-all flow with cancellation and clearer GitHub primary/secondary rate-limit retry guidance.
 - Tracked public roadmap file for completed and upcoming implementation passes.
 
 ## v0.1.0 — 2026-04-25

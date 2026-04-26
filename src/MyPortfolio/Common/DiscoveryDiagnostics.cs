@@ -127,8 +127,8 @@ public sealed class GitHubRateLimitSnapshot
 public static class GitHubDiscoveryDiagnostics
 {
     public static string RateLimitMessage(RateLimitExceededException ex)
-        => $"GitHub primary rate limit reached; retry after {ex.Reset.ToLocalTime():h:mm tt}.";
+        => $"GitHub primary rate limit reached; retry after {ex.Reset.ToLocalTime():h:mm tt}. Add a token or wait for the reset before refreshing again.";
 
     public static string SecondaryRateLimitMessage()
-        => "GitHub secondary rate limit reached; pause before refreshing again.";
+        => "GitHub secondary rate limit reached; wait at least one minute before refreshing again, then back off longer if it repeats.";
 }

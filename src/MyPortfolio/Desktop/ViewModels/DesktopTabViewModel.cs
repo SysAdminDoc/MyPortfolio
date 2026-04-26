@@ -109,13 +109,16 @@ public sealed class DesktopTabViewModel : ViewModelBase
             || vm.Repo.Contains(q, StringComparison.OrdinalIgnoreCase);
     }
 
-    public async Task RefreshAsync()
+    public Task RefreshAsync() => RefreshAsync(CancellationToken.None);
+
+    public async Task RefreshAsync(CancellationToken ct)
     {
         Busy = true;
         try
         {
             _log.Append("Desktop", "Discovering desktop apps...");
-            var result = await _github.DiscoverAsync(_settingsAccessor(), _log.AsProgress("Desktop"));
+            var result = await _github.DiscoverAsync(_settingsAccessor(), _log.AsProgress("Desktop"), ct);
+            ct.ThrowIfCancellationRequested();
             ApplyDiagnostics(result.Diagnostics);
             Apps.Clear();
             foreach (var info in result.Items)
@@ -130,6 +133,11 @@ public sealed class DesktopTabViewModel : ViewModelBase
             MarkRefreshed();
             _log.Append("Desktop", $"Found {Apps.Count} app(s) — {InstalledCount} installed.");
             if (_diagnostics.HasWarnings) _log.Append("Desktop", $"! {_diagnostics.WarningText}");
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            _log.Append("Desktop", "Refresh canceled.");
+            throw;
         }
         catch (Exception ex)
         {

@@ -113,13 +113,16 @@ public sealed class AndroidTabViewModel : ViewModelBase
             || vm.ApkVersionName.Contains(q, StringComparison.OrdinalIgnoreCase);
     }
 
-    public async Task RefreshAsync()
+    public Task RefreshAsync() => RefreshAsync(CancellationToken.None);
+
+    public async Task RefreshAsync(CancellationToken ct)
     {
         Busy = true;
         try
         {
             _log.Append("Android", "Discovering Android APK releases...");
-            var result = await _github.DiscoverAsync(_settingsAccessor(), _log.AsProgress("Android"));
+            var result = await _github.DiscoverAsync(_settingsAccessor(), _log.AsProgress("Android"), ct);
+            ct.ThrowIfCancellationRequested();
             ApplyDiagnostics(result.Diagnostics);
             Apps.Clear();
             foreach (var info in result.Items)
@@ -134,6 +137,11 @@ public sealed class AndroidTabViewModel : ViewModelBase
             MarkRefreshed();
             _log.Append("Android", $"Found {Apps.Count} Android app(s) — {DownloadedCount} downloaded.");
             if (_diagnostics.HasWarnings) _log.Append("Android", $"! {_diagnostics.WarningText}");
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            _log.Append("Android", "Refresh canceled.");
+            throw;
         }
         catch (Exception ex) { _log.Append("Android", $"! Refresh failed: {ex.Message}"); }
         finally { Busy = false; }
